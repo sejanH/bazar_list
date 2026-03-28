@@ -6,14 +6,10 @@
 .PHONY: help build build-web build-cli clean test test-coverage fmt lint run run-web install deps
 
 # Variables
-APP_NAME=bazarlist
 WEB_APP_NAME=bazarlist-web
 BUILD_DIR=build
-CLI_CMD_DIR=cmd/cli
 WEB_CMD_DIR=cmd/web
-CLI_MAIN_FILE=$(CLI_CMD_DIR)/main.go
 WEB_MAIN_FILE=$(WEB_CMD_DIR)/main.go
-CLI_BINARY=$(BUILD_DIR)/$(APP_NAME)
 WEB_BINARY=$(BUILD_DIR)/$(WEB_APP_NAME)
 GO_FILES=$(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path './build/*')
 
@@ -42,15 +38,8 @@ help:
 	@echo "  make deps           - Download dependencies"
 	@echo "  make install        - Install the applications"
 
-# Build all applications
-build: build-cli build-web
-
-# Build CLI application
-build-cli:
-	@echo "Building CLI application..."
-	@mkdir -p $(BUILD_DIR)
-	@go build -o $(CLI_BINARY) $(CLI_MAIN_FILE)
-	@echo "CLI build complete: $(CLI_BINARY)"
+# Build web application only
+build: build-web
 
 # Build web application
 build-web:
@@ -58,11 +47,6 @@ build-web:
 	@mkdir -p $(BUILD_DIR)
 	@go build -o $(WEB_BINARY) $(WEB_MAIN_FILE)
 	@echo "Web build complete: $(WEB_BINARY)"
-
-# Run CLI application
-run-cli:
-	@echo "Running CLI application..."
-	@go run $(CLI_MAIN_FILE)
 
 # Run web application
 run-web:
