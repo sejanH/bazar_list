@@ -1,5 +1,8 @@
 # Bazar List Makefile
 
+# Load environment variables from .env file (if it exists)
+-include .env
+
 .PHONY: help build build-web build-cli clean test test-coverage fmt lint run run-web install deps
 
 # Variables
@@ -13,6 +16,15 @@ WEB_MAIN_FILE=$(WEB_CMD_DIR)/main.go
 CLI_BINARY=$(BUILD_DIR)/$(APP_NAME)
 WEB_BINARY=$(BUILD_DIR)/$(WEB_APP_NAME)
 GO_FILES=$(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path './build/*')
+
+# Database configuration
+# These are default values. Override them by setting environment variables
+# or creating a .env file in the project root.
+DB_USER?=bazarlist
+DB_PASSWORD?=bazarlist123
+DB_HOST?=localhost
+DB_PORT?=3306
+DB_NAME?=bazarlist
 
 # Default target
 help:
@@ -41,16 +53,21 @@ build-cli:
 	@echo "CLI build complete: $(CLI_BINARY)"
 
 # Build web application
-build-CLI application
-run:
+build-web:
+	@echo "Building web application..."
+	@mkdir -p $(BUILD_DIR)
+	@go build -o $(WEB_BINARY) $(WEB_MAIN_FILE)
+	@echo "Web build complete: $(WEB_BINARY)"
+
+# Run CLI application
+run-cli:
 	@echo "Running CLI application..."
 	@go run $(CLI_MAIN_FILE)
 
 # Run web application
 run-web:
 	@echo "Running web application..."
-	@go run $(WEB_-o $(WEB_BINARY) $(WEB_MAIN_FILE)
-	@echo "Web build complete: $(WEB_BINARY)"
+	@DB_USER=$(DB_USER) DB_PASSWORD=$(DB_PASSWORD) DB_HOST=$(DB_HOST) DB_PORT=$(DB_PORT) DB_NAME=$(DB_NAME) PORT=$(PORT) go run $(WEB_MAIN_FILE)
 
 # Clean build artifacts
 clean:
@@ -58,11 +75,6 @@ clean:
 	@rm -rf $(BUILD_DIR)
 	@rm -f *.out
 	@echo "Clean complete"
-
-# Run the application
-run:
-	@echo "Running $(APP_NAME)..."
-	@go run $(MAIN_FILE)
 
 # Run tests
 test:

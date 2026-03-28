@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/sejan/bazarlist/internal/api"
-	"github.com/sejan/bazarlist/internal/service"
+	"github.com/sejan/bazarlist/internal/storage"
 )
 
 func main() {
@@ -18,30 +17,48 @@ func main() {
 		port = "8080"
 	}
 
-	// Get data directory from environment or use default
-	dataDir := os.Getenv("BAZARLIST_DATA_DIR")
-	if dataDir == "" {
-		dataDir = "./data"
-	}
-
-	// Initialize service
-	svc, err := service.NewShoppingService(dataDir)
+	// Initialize MySQL storage
+	store, err := storage.NewMySQLStorageFromEnv()
 	if err != nil {
-		log.Fatalf("Failed to initialize service: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
+	defer store.Close()
 
-	// Create HTTP handler
-	handler := api.NewHTTPHandler(svc)
+	log.Println("✅ Database connected successfully")
+
+	// Create handlers
+	authHandler := api.NewAuthHandler(store)
+	listHandler := api.NewListHandler(store)
 
 	// Create router
 	router := mux.NewRouter()
 
-	// Add middleware
-	router.Use(handler.LoggingMiddleware)
-	router.Use(handler.EnableCORS)
+	// CORS middleware
+	router.Use(api.CORSMiddleware)
 
-	// Register routes
-	handler.RegisterRoutes(router)
+	// Authentication routes (no auth required)
+	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
+	router.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
+
+	// Shopping list routes (auth required)
+	apiRouter := router.PathPrefix("/api").Subrouter()
+	apiRouter.Use(authHandler.AuthMiddleware)
+
+	// Lists CRUD
+	apiRouter.HandleFunc("/lists", listHandler.GetLists).Methods("GET")
+	apiRouter.HandleFunc("/lists", listHandler.CreateList).Methods("POST")
+	apiRouter.HandleFunc("/lists/{id}", listHandler.GetList).Methods("GET")
+	apiRouter.HandleFunc("/lists/{id}", listHandler.UpdateList).Methods("PUT", "PATCH")
+	apiRouter.HandleFunc("/lists/{id}", listHandler.DeleteList).Methods("DELETE")
+
+	// Items CRUD
+	apiRouter.HandleFunc("/lists/{id}/items", listHandler.GetItems).Methods("GET")
+	apiRouter.HandleFunc("/lists/{id}/items", listHandler.CreateItem).Methods("POST")
+	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.UpdateItem).Methods("PUT", "PATCH")
+	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.DeleteItem).Methods("DELETE")
+
+	// Serve static files
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/static/")))
 
 	// Create server
 	server := &http.Server{
@@ -49,12 +66,11 @@ func main() {
 		Handler: router,
 	}
 
-	// Start server
-	fmt.Printf("🛒 Bazar List Web Server\n")
-	fmt.Printf("📦 Data directory: %s\n", dataDir)
-	fmt.Printf("🌐 Server running at: http://localhost:%s\n", port)
-	fmt.Printf("📄 API docs: http://localhost:%s/api\n", port)
-	fmt.Printf("\nPress Ctrl+C to stop the server\n\n")
+	log.Printf("🛒 Bazar List Web Server (MySQL + Auth)")
+	log.Printf("📦 Database: MySQL")
+	log.Printf("🌐 Server running at: http://localhost:%s", port)
+	log.Printf("📄 API: http://localhost:%s/api", port)
+	log.Printf("\nPress Ctrl+C to stop the server\n")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)

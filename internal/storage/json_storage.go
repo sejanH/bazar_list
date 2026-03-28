@@ -79,7 +79,7 @@ func (s *JSONStorage) Load() (*models.ShoppingList, error) {
 
 	// Handle empty items slice
 	if list.Items == nil {
-		list.Items = make([]*models.Item, 0)
+		list.Items = make([]models.Item, 0)
 	}
 
 	return &list, nil
