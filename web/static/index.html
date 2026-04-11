@@ -444,6 +444,114 @@
             margin-bottom: 15px;
             opacity: 0.5;
         }
+
+        /* Grouping & Pagination Styles */
+        .controls-container {
+            padding: 15px 15px 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .month-filter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0f4ff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #d0d7f7;
+        }
+
+        .month-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .month-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            font-size: 0.85rem;
+            color: #2d3748;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .month-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px 15px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+
+        .page-info {
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .month-total-section {
+            background: #f8faff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .month-total-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .month-total-amount {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -485,19 +593,42 @@
         </form>
     </div>
 
-    <!-- Lists Page -->
-    <div id="listsPage" class="container hidden">
-        <div class="header">
-            <div class="header-title">🛒 My Lists</div>
-            <div class="header-user">
-                <span id="usernameDisplay"></span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+        <div id="listsPage" class="container hidden">
+            <div class="header">
+                <div class="header-title">🛒 My Lists</div>
+                <div class="header-user">
+                    <span id="usernameDisplay"></span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            
+            <div class="controls-container">
+                <div class="month-filter">
+                    <div class="month-label">
+                        📅 <span id="currentMonthDisplay">Loading...</span>
+                        <span id="totalItemsBadge" class="stats-badge">0</span>
+                    </div>
+                    <select id="monthSelect" class="month-select" onchange="changeMonth(this.value)">
+                        <option value="">Select Month</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="listsContainer" class="lists-container">
+                <div class="loading">Loading</div>
+            </div>
+
+            <div id="monthTotalSection" class="month-total-section hidden">
+                <div class="month-total-label">Monthly Total Expenses</div>
+                <div id="monthTotalAmount" class="month-total-amount">$0.00</div>
+            </div>
+
+            <div id="paginationContainer" class="pagination-container hidden">
+                <button id="prevPageBtn" class="page-btn" onclick="changePage(-1)">← Prev</button>
+                <div id="pageInfo" class="page-info">Page 1 of 1</div>
+                <button id="nextPageBtn" class="page-btn" onclick="changePage(1)">Next →</button>
             </div>
         </div>
-        <div id="listsContainer" class="lists-container">
-            <div class="loading">Loading</div>
-        </div>
-    </div>
     <button id="addListBtn" class="add-list-btn hidden" onclick="showAddListModal()">+</button>
 
     <!-- List Details Page -->
@@ -564,6 +695,12 @@
         let token = localStorage.getItem('token');
         let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         let currentListId = null;
+        
+        // Grouping & Pagination State
+        let currentMonth = '';
+        let currentPage = 1;
+        let currentLimit = 10;
+        let totalPages = 1;
 
         // Check authentication on load
         document.addEventListener('DOMContentLoaded', () => {
@@ -685,24 +822,67 @@
         }
 
         // API Functions
-        async function loadLists() {
+        async function loadLists(month = currentMonth, page = currentPage) {
             const container = document.getElementById('listsContainer');
             container.innerHTML = '<div class="loading">Loading</div>';
 
             try {
-                const response = await fetch(`${API_BASE}/lists`, {
+                let url = `${API_BASE}/lists?page=${page}&limit=${currentLimit}`;
+                if (month) url += `&month=${month}`;
+
+                const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                const lists = await response.json();
-                displayLists(lists);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentMonth = data.month;
+                    currentPage = data.pagination.current_page;
+                    totalPages = data.pagination.total_pages;
+                    displayLists(data);
+                } else {
+                    container.innerHTML = `<div class="error">${data.error || 'Failed to load lists'}</div>`;
+                }
             } catch (error) {
                 container.innerHTML = '<div class="error">Failed to load lists</div>';
+                console.error('Error loading lists:', error);
             }
         }
 
-        function displayLists(lists) {
+        function displayLists(data) {
             const container = document.getElementById('listsContainer');
+            const lists = data.lists || [];
+            
+            // Update month selector & display
+            document.getElementById('currentMonthDisplay').textContent = formatMonth(data.month);
+            document.getElementById('totalItemsBadge').textContent = data.pagination ? data.pagination.total_items : 0;
+            
+            const monthTotalSection = document.getElementById('monthTotalSection');
+            const monthTotalAmount = document.getElementById('monthTotalAmount');
+            if (monthTotalSection && monthTotalAmount) {
+                monthTotalSection.classList.remove('hidden');
+                monthTotalAmount.textContent = `$${(data.total_amount || 0).toFixed(2)}`;
+            }
+
+            const monthSelect = document.getElementById('monthSelect');
+            if (data.available_months && data.available_months.length > 0) {
+                const currentVal = monthSelect.value;
+                monthSelect.innerHTML = data.available_months.map(m => `
+                    <option value="${m}" ${m === data.month ? 'selected' : ''}>${formatMonth(m)}</option>
+                `).join('');
+            }
+
+            // Update pagination
+            const paginationContainer = document.getElementById('paginationContainer');
+            if (data.pagination && data.pagination.total_pages > 1) {
+                paginationContainer.classList.remove('hidden');
+                document.getElementById('pageInfo').textContent = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
+                document.getElementById('prevPageBtn').disabled = data.pagination.current_page <= 1;
+                document.getElementById('nextPageBtn').disabled = data.pagination.current_page >= data.pagination.total_pages;
+            } else {
+                paginationContainer.classList.add('hidden');
+            }
             
             if (lists.length === 0) {
                 container.innerHTML = `
@@ -710,7 +890,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 3h18v18H3zM9 9h6M9 13h6M9 17h6"/>
                         </svg>
-                        <p>No shopping lists yet</p>
+                        <p>No shopping lists for this month</p>
                         <p style="font-size: 0.9rem; margin-top: 10px;">Tap + to create your first list</p>
                     </div>
                 `;
@@ -734,6 +914,27 @@
                     </div>
                 </div>
             `}).join('');
+        }
+
+        function formatMonth(monthStr) {
+            if (!monthStr) return '';
+            const [year, month] = monthStr.split('-');
+            const date = new Date(year, month - 1);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        function changeMonth(newMonth) {
+            currentMonth = newMonth;
+            currentPage = 1;
+            loadLists(newMonth, 1);
+        }
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadLists(currentMonth, newPage);
+            }
         }
 
         async function loadListDetails(listId) {

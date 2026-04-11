@@ -77,3 +77,18 @@ type ItemRequest struct {
 	Price     float64 `json:"price"`
 	Purchased bool    `json:"purchased"`
 }
+
+type PaginationInfo struct {
+	CurrentPage int   `json:"current_page"`
+	TotalPages  int   `json:"total_pages"`
+	TotalItems  int64 `json:"total_items"`
+	Limit       int   `json:"limit"`
+}
+
+type PaginatedListsResponse struct {
+	Month           string         `json:"month"`
+	Lists           []ShoppingList `json:"lists"`
+	Pagination      PaginationInfo `json:"pagination"`
+	AvailableMonths []string       `json:"available_months"`
+	TotalAmount     float64        `json:"total_amount"`
+}

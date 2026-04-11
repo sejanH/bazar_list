@@ -118,6 +118,82 @@ func (s *MySQLStorage) GetListsByUserID(userID uint) ([]models.ShoppingList, err
 	return lists, err
 }
 
+// GetPaginatedListsByMonth fetches lists for a specific month with pagination
+func (s *MySQLStorage) GetPaginatedListsByMonth(userID uint, year, month int, page, limit int) ([]models.ShoppingList, int64, error) {
+	var lists []models.ShoppingList
+	var total int64
+
+	query := s.db.Model(&models.ShoppingList{}).
+		Where("user_id = ? AND YEAR(date) = ? AND MONTH(date) = ?", userID, year, month)
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch paginated data
+	offset := (page - 1) * limit
+	err := query.Order("date DESC, created_at DESC").
+		Preload("Items").
+		Offset(offset).
+		Limit(limit).
+		Find(&lists).Error
+
+	return lists, total, err
+}
+
+// GetLatestMonth finds the most recent year and month that has data for the user
+func (s *MySQLStorage) GetLatestMonth(userID uint) (int, int, error) {
+	var result struct {
+		Year  int
+		Month int
+	}
+
+	err := s.db.Model(&models.ShoppingList{}).
+		Select("YEAR(date) as year, MONTH(date) as month").
+		Where("user_id = ?", userID).
+		Order("date DESC").
+		First(&result).Error
+
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return result.Year, result.Month, nil
+}
+
+// GetMonthTotal calculates the total sum of all item prices for a specific month
+func (s *MySQLStorage) GetMonthTotal(userID uint, year, month int) (float64, error) {
+	var total float64
+	
+	// Join items and shopping_lists to sum prices by user and month
+	err := s.db.Table("items").
+		Joins("JOIN shopping_lists ON items.list_id = shopping_lists.id").
+		Where("shopping_lists.user_id = ? AND YEAR(shopping_lists.date) = ? AND MONTH(shopping_lists.date) = ?", userID, year, month).
+		Select("COALESCE(SUM(items.price), 0)").
+		Scan(&total).Error
+	
+	return total, err
+}
+
+// GetAvailableMonths returns a list of "YYYY-MM" strings for all months with data
+func (s *MySQLStorage) GetAvailableMonths(userID uint) ([]string, error) {
+	months := []string{}
+	
+	// Use Pluck to get formatted distinct months
+	err := s.db.Model(&models.ShoppingList{}).
+		Select("DISTINCT DATE_FORMAT(date, '%Y-%m') as month_str").
+		Where("user_id = ?", userID).
+		Order("month_str DESC").
+		Pluck("month_str", &months).Error
+	
+	if err != nil {
+		return []string{}, err
+	}
+
+	return months, nil
+}
+
 func (s *MySQLStorage) UpdateList(list *models.ShoppingList) error {
 	return s.db.Save(list).Error
 }

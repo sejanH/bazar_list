@@ -2,7 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -22,7 +25,7 @@ func NewListHandler(store *storage.MySQLStorage) *ListHandler {
 	}
 }
 
-// GetLists returns all lists for the authenticated user
+// GetLists returns paginated lists for a specific month
 func (h *ListHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 	userID := GetUserID(r)
 	if userID == 0 {
@@ -30,13 +33,80 @@ func (h *ListHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lists, err := h.storage.GetListsByUserID(userID)
+	// Parse query parameters
+	query := r.URL.Query()
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page <= 0 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+
+	var year, month int
+	monthStr := query.Get("month")
+
+	if monthStr == "" {
+		// Default to latest month
+		var err error
+		year, month, err = h.storage.GetLatestMonth(userID)
+		if err != nil {
+			// No lists found, return empty response
+			months, _ := h.storage.GetAvailableMonths(userID)
+			if months == nil {
+				months = []string{}
+			}
+			respondJSON(w, http.StatusOK, models.PaginatedListsResponse{
+				AvailableMonths: months,
+				Lists:           []models.ShoppingList{},
+			})
+			return
+		}
+		monthStr = fmt.Sprintf("%04d-%02d", year, month)
+	} else {
+		// Parse requested month (YYYY-MM)
+		if _, err := fmt.Sscanf(monthStr, "%d-%d", &year, &month); err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid month format. Use YYYY-MM")
+			return
+		}
+	}
+
+	// Fetch data
+	lists, total, err := h.storage.GetPaginatedListsByMonth(userID, year, month, page, limit)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch lists")
 		return
 	}
+	if lists == nil {
+		lists = []models.ShoppingList{}
+	}
 
-	respondJSON(w, http.StatusOK, lists)
+	// Get all available months for grouping menu
+	availableMonths, _ := h.storage.GetAvailableMonths(userID)
+	if availableMonths == nil {
+		availableMonths = []string{}
+	}
+
+	// Get total for the month across all lists
+	monthTotal, _ := h.storage.GetMonthTotal(userID, year, month)
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	response := models.PaginatedListsResponse{
+		Month: monthStr,
+		Lists: lists,
+		Pagination: models.PaginationInfo{
+			CurrentPage: page,
+			TotalPages:  totalPages,
+			TotalItems:  total,
+			Limit:       limit,
+		},
+		AvailableMonths: availableMonths,
+		TotalAmount:     monthTotal,
+	}
+
+	respondJSON(w, http.StatusOK, response)
 }
 
 // GetList returns a specific list with items
