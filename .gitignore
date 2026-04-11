@@ -44,3 +44,4 @@ configs/*.local.json
 data/
 *.db
 *.json.bak
+.go_cache/
