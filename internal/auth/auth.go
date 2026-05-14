@@ -50,7 +50,7 @@ func (a *AuthManager) CheckPassword(password, hash string) bool {
 
 // GenerateToken generates a JWT token for a user
 func (a *AuthManager) GenerateToken(userID uint) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour) // Token valid for 24 hours
+	expirationTime := time.Now().Add(14 * 24 * time.Hour) // Token valid for 14 days
 
 	claims := &Claims{
 		UserID: userID,

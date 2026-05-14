@@ -60,6 +60,13 @@ func (h *ListHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 			respondJSON(w, http.StatusOK, models.PaginatedListsResponse{
 				AvailableMonths: months,
 				Lists:           []models.ShoppingList{},
+				Month:           "",
+				Pagination: models.PaginationInfo{
+					CurrentPage: 1,
+					TotalPages:  1,
+					TotalItems:  0,
+					Limit:       limit,
+				},
 			})
 			return
 		}

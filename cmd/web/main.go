@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/sejan/bazarlist/internal/api"
@@ -11,6 +13,9 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env file
+	loadEnv(".env")
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -74,5 +79,31 @@ func main() {
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
+	}
+}
+
+// loadEnv loads environment variables from a file
+func loadEnv(filename string) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		os.Setenv(key, value)
 	}
 }

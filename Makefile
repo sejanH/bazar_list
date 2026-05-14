@@ -17,7 +17,7 @@ GO_FILES=$(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path 
 # These are default values. Override them by setting environment variables
 # or creating a .env file in the project root.
 DB_USER?=bazarlist
-DB_PASSWORD?=bazarlist123
+DB_PASSWORD?=x
 DB_HOST?=localhost
 DB_PORT?=3306
 DB_NAME?=bazarlist
