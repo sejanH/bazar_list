@@ -524,7 +524,7 @@
     }
 
     .summary-section-card {
-        background: white;
+        background: #ffffff;
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 18px;
@@ -538,11 +538,11 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     .summary-section-title {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -559,6 +559,10 @@
         border: 1px solid #f1f5f9;
         box-sizing: border-box;
         width: 100%;
+    }
+
+    .trip-breakdown-row:last-child {
+        margin-bottom: 0;
     }
 
     .trip-breakdown-row:hover {
@@ -592,12 +596,31 @@
         color: var(--text-dim);
     }
 
+    .top-item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+    }
+
+    .top-item-row:last-child {
+        margin-bottom: 0;
+    }
+
     /* Lists List */
     .lists-container {
         padding: 4px 16px 100px;
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        background-color: #f8fafc;
     }
 
     .list-card {
@@ -1842,17 +1865,19 @@
                     `;
                 } else {
                     topItemsContainer.innerHTML = top5.map((item, idx) => `
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-dim); width: 16px;">#${idx + 1}</span>
+                        <div class="top-item-row">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 26px; height: 26px; border-radius: 8px; background: #eef2ff; color: var(--primary); font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    #${idx + 1}
+                                </div>
                                 <div>
-                                    <div style="font-weight: 600; font-size: 0.875rem;">${escapeHtml(item.name)}</div>
-                                    <div style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(item.listName)}</div>
+                                    <div style="font-weight: 600; font-size: 0.875rem; color: var(--text-main);">${escapeHtml(item.name)}</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">${escapeHtml(item.listName)}</div>
                                 </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 700; color: var(--primary); font-size: 0.875rem;">৳${(item.price || 0).toFixed(2)}</div>
-                                <div style="font-size: 0.7rem; color: ${item.purchased ? 'var(--success)' : 'var(--text-dim)'}; font-weight: 500;">
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem;">৳${(item.price || 0).toFixed(2)}</div>
+                                <div style="font-size: 0.7rem; color: ${item.purchased ? 'var(--success)' : 'var(--text-dim)'}; font-weight: 600; margin-top: 2px;">
                                     ${item.purchased ? '✓ Purchased' : 'Pending'}
                                 </div>
                             </div>
