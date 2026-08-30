@@ -41,17 +41,21 @@
         --primary: #4f46e5;
         --primary-light: #818cf8;
         --primary-dark: #3730a3;
+        --accent-emerald: #10b981;
+        --accent-amber: #f59e0b;
+        --accent-rose: #ec4899;
+        --accent-violet: #8b5cf6;
         --success: #10b981;
         --danger: #ef4444;
-        --bg-page: #f9fafb;
+        --bg-page: #f0fdf4;
         --bg-card: #ffffff;
-        --text-main: #111827;
-        --text-dim: #6b7280;
-        --border: #e5e7eb;
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --radius: 16px;
+        --text-main: #0f172a;
+        --text-dim: #64748b;
+        --border: #e2e8f0;
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        --shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+        --shadow-lg: 0 20px 35px -10px rgba(99, 102, 241, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+        --radius: 18px;
     }
 
     * {
@@ -63,7 +67,8 @@
 
     body {
         font-family: 'Inter', -apple-system, sans-serif;
-        background-color: var(--bg-page);
+        background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 45%, #fef3c7 100%);
+        background-attachment: fixed;
         color: var(--text-main);
         min-height: 100vh;
         display: flex;
@@ -74,12 +79,12 @@
     .container {
         width: 100%;
         max-width: 500px;
-        background: #f8fafc;
+        background: #fbfcfe;
         min-height: 100vh;
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 20px 45px -15px rgba(79, 70, 229, 0.15), 0 0 20px rgba(16, 185, 129, 0.08);
         position: relative;
     }
 
@@ -413,33 +418,49 @@
         gap: 16px;
         box-sizing: border-box;
         width: 100%;
+        background-color: #fbfcfe;
     }
 
     .summary-hero-card {
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        border-radius: 18px;
-        padding: 22px 20px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #ec4899 100%);
+        border-radius: 20px;
+        padding: 24px 22px;
         color: white;
-        box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.35);
+        box-shadow: 0 14px 28px -6px rgba(124, 58, 237, 0.4), 0 6px 12px -4px rgba(236, 72, 153, 0.3);
         margin: 0;
         box-sizing: border-box;
         width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-hero-card::after {
+        content: '';
+        position: absolute;
+        top: -25px;
+        right: -25px;
+        width: 110px;
+        height: 110px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 50%;
+        pointer-events: none;
     }
 
     .summary-label {
         font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        opacity: 0.85;
+        letter-spacing: 0.06em;
+        opacity: 0.9;
         margin-bottom: 4px;
-        font-weight: 600;
+        font-weight: 700;
     }
 
     .summary-value {
-        font-size: 1.85rem;
+        font-size: 2rem;
         font-weight: 800;
         margin-bottom: 12px;
         letter-spacing: -0.02em;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .summary-meta {
@@ -447,7 +468,7 @@
         justify-content: space-between;
         font-size: 0.85rem;
         padding-top: 12px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
     }
 
     .stats-cards-grid {
@@ -460,13 +481,19 @@
     }
 
     .stat-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
+        border-radius: 18px;
         padding: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
         box-sizing: border-box;
         width: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px -3px rgba(99, 102, 241, 0.1);
     }
 
     .stat-card-header {
@@ -477,26 +504,26 @@
     }
 
     .stat-card-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #eef2ff;
-        color: var(--primary);
+        background: #fdf2f8;
+        color: #db2777;
     }
 
     .stat-card-title {
         font-size: 0.72rem;
         color: var(--text-dim);
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.04em;
     }
 
     .stat-card-value {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: var(--text-main);
     }
@@ -510,7 +537,7 @@
     .progress-bar-container {
         width: 100%;
         height: 6px;
-        background: #e5e7eb;
+        background: #f1f5f9;
         border-radius: 999px;
         overflow: hidden;
         margin-top: 8px;
@@ -518,17 +545,17 @@
 
     .progress-bar-fill {
         height: 100%;
-        background: var(--success);
+        background: linear-gradient(90deg, #10b981, #06b6d4);
         border-radius: 999px;
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .summary-section-card {
         background: #ffffff;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        border: 1px solid #f1f5f9;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         box-sizing: border-box;
         width: 100%;
         margin: 0;
@@ -547,16 +574,18 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        color: var(--text-main);
     }
 
     .trip-breakdown-row {
-        padding: 12px 14px;
-        border-radius: 12px;
-        background: #f8fafc;
-        margin-bottom: 8px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #ffffff;
+        margin-bottom: 10px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid #f1f5f9;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
         box-sizing: border-box;
         width: 100%;
     }
@@ -566,9 +595,10 @@
     }
 
     .trip-breakdown-row:hover {
-        background: #f1f5f9;
-        border-color: var(--primary-light);
-        transform: translateX(2px);
+        background: #faf5ff;
+        border-color: #d8b4fe;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px -2px rgba(217, 70, 239, 0.15);
     }
 
     .trip-row-top {
@@ -581,12 +611,13 @@
     .trip-row-name {
         font-weight: 600;
         font-size: 0.875rem;
+        color: var(--text-main);
     }
 
     .trip-row-price {
         font-weight: 700;
         color: var(--primary);
-        font-size: 0.875rem;
+        font-size: 0.9rem;
     }
 
     .trip-row-bottom {
@@ -600,13 +631,14 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px 14px;
-        background: #f8fafc;
+        padding: 14px 16px;
+        background: #ffffff;
         border: 1px solid #f1f5f9;
-        border-radius: 12px;
-        margin-bottom: 8px;
+        border-radius: 14px;
+        margin-bottom: 10px;
         width: 100%;
         box-sizing: border-box;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
         transition: all 0.2s ease;
     }
 
@@ -614,33 +646,40 @@
         margin-bottom: 0;
     }
 
+    .top-item-row:hover {
+        background: #f0fdf4;
+        border-color: #86efac;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.15);
+    }
+
     /* Lists List */
     .lists-container {
-        padding: 4px 16px 100px;
+        padding: 6px 16px 100px;
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        background-color: #f8fafc;
+        background-color: #fbfcfe;
     }
 
     .list-card {
-        background: white;
-        border: 1px solid var(--border);
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
         border-radius: var(--radius);
-        padding: 16px;
+        padding: 18px 20px;
         margin-bottom: 12px;
-        transition: all 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     }
 
     .list-card:hover {
-        border-color: var(--primary-light);
-        box-shadow: var(--shadow);
-        transform: translateX(4px);
+        border-color: #a5b4fc;
+        box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.15);
+        transform: translateY(-2px);
     }
 
     .list-card-content {
@@ -651,6 +690,7 @@
         font-weight: 700;
         font-size: 1rem;
         margin-bottom: 4px;
+        color: var(--text-main);
     }
 
     .list-info {
@@ -689,14 +729,16 @@
         transform: translateX(-50%);
         width: 100%;
         max-width: 500px;
-        background: white;
-        border-top: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-around;
-        padding: 6px 0;
+        padding: 8px 0;
         padding-bottom: calc(10px + env(safe-area-inset-bottom));
         z-index: 90;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .nav-item {
@@ -707,7 +749,7 @@
         color: var(--text-dim);
         text-decoration: none;
         font-size: 0.7rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.2s;
         cursor: pointer;
         flex: 1;
@@ -728,45 +770,46 @@
     /* Adjust FAB for Bottom Nav */
     .fab {
         position: fixed;
-        bottom: 68px;
-        /* Moved up to clear bottom nav */
+        bottom: 72px;
         right: 24px;
-        width: 56px;
-        height: 56px;
-        border-radius: 16px;
-        background: var(--primary);
+        width: 58px;
+        height: 58px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 16px rgba(79, 70, 229, 0.4);
+        box-shadow: 0 10px 24px -4px rgba(124, 58, 237, 0.5);
         cursor: pointer;
-        transition: all 0.2s;
-        z-index: 100;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 80;
         border: none;
     }
 
     .fab:hover {
-        transform: scale(1.05) translateY(-2px);
-        background: var(--primary-dark);
+        transform: scale(1.06);
+        box-shadow: 0 14px 28px -4px rgba(236, 72, 153, 0.6);
     }
 
     /* Items Section */
     .item-row {
-        background: white;
+        background: #ffffff;
         padding: 14px 16px;
-        border-radius: 14px;
-        margin-bottom: 8px;
+        border-radius: 16px;
+        margin-bottom: 10px;
         display: flex;
         align-items: center;
         gap: 12px;
-        border: 1px solid var(--border);
-        transition: all 0.2s;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .item-row:hover {
-        border-color: var(--primary-light);
-        background: #fdfdff;
+        border-color: #a5b4fc;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.12);
     }
 
     /* List Total Section */
@@ -1036,7 +1079,7 @@
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <span class="stat-card-title">Shopping Trips</span>
-                            <div class="stat-card-icon"><i data-lucide="shopping-bag" size="16"></i></div>
+                            <div class="stat-card-icon" style="background: #fdf2f8; color: #db2777;"><i data-lucide="shopping-bag" size="16"></i></div>
                         </div>
                         <div class="stat-card-value" id="summaryTripsCount">0</div>
                         <div class="stat-card-sub" id="summaryTripsSub">Lists this month</div>
@@ -1045,7 +1088,7 @@
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <span class="stat-card-title">Avg. / Trip</span>
-                            <div class="stat-card-icon"><i data-lucide="calculator" size="16"></i></div>
+                            <div class="stat-card-icon" style="background: #fffbeb; color: #d97706;"><i data-lucide="calculator" size="16"></i></div>
                         </div>
                         <div class="stat-card-value" id="summaryAvgTrip">৳0.00</div>
                         <div class="stat-card-sub">Per shopping list</div>
@@ -1054,7 +1097,7 @@
                     <div class="stat-card" style="grid-column: span 2;">
                         <div class="stat-card-header">
                             <span class="stat-card-title">Items Purchased</span>
-                            <span class="filter-count-badge" id="summaryItemsPercent">0%</span>
+                            <span class="filter-count-badge" id="summaryItemsPercent" style="background: #ecfdf5; color: #059669;">0%</span>
                         </div>
                         <div class="stat-card-value" id="summaryItemsRatio">0 / 0 items</div>
                         <div class="progress-bar-container">
