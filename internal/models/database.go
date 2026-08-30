@@ -92,3 +92,52 @@ type PaginatedListsResponse struct {
 	AvailableMonths []string       `json:"available_months"`
 	TotalAmount     float64        `json:"total_amount"`
 }
+
+// Member Roles
+const (
+	RoleOwner  = "owner"
+	RoleEditor = "editor"
+	RoleViewer = "viewer"
+)
+
+// Activity Actions
+const (
+	ActionItemAdded     = "item_added"
+	ActionItemUpdated   = "item_updated"
+	ActionItemPurchased = "item_purchased"
+	ActionItemDeleted   = "item_deleted"
+	ActionMemberJoined  = "member_joined"
+	ActionMemberRemoved = "member_removed"
+)
+
+type ListMember struct {
+	ID        uint          `json:"id" gorm:"primaryKey"`
+	ListID    uint          `json:"list_id" gorm:"not null;index;uniqueIndex:idx_list_user"`
+	UserID    uint          `json:"user_id" gorm:"not null;index;uniqueIndex:idx_list_user"`
+	Role      string        `json:"role" gorm:"type:varchar(20);not null;default:'editor'"`
+	User      *User         `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	List      *ShoppingList `json:"-" gorm:"foreignKey:ListID"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+}
+
+type ListActivity struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	ListID    uint      `json:"list_id" gorm:"not null;index"`
+	UserID    uint      `json:"user_id" gorm:"not null;index"`
+	UserName  string    `json:"user_name" gorm:"type:varchar(100);not null"`
+	Action    string    `json:"action" gorm:"type:varchar(50);not null"`
+	ItemName  string    `json:"item_name" gorm:"type:varchar(255)"`
+	Details   string    `json:"details" gorm:"type:varchar(255)"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type InviteMemberRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	Role  string `json:"role"` // "editor" or "viewer" (defaults to "editor")
+}
+
+type UpdateMemberRoleRequest struct {
+	Role string `json:"role" binding:"required"`
+}
+

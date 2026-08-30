@@ -44,7 +44,7 @@ func NewMySQLStorage(config DatabaseConfig) (*MySQLStorage, error) {
 	}
 
 	// Auto-migrate tables
-	if err := db.AutoMigrate(&models.User{}, &models.ShoppingList{}, &models.Item{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.ShoppingList{}, &models.Item{}, &models.ListMember{}, &models.ListActivity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
