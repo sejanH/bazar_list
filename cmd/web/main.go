@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sejan/bazarlist/internal/api"
+	"github.com/sejan/bazarlist/internal/live"
 	"github.com/sejan/bazarlist/internal/storage"
 )
 
@@ -31,9 +32,13 @@ func main() {
 
 	log.Println("✅ Database connected successfully")
 
+	// Initialize live pub/sub broadcast hub
+	liveHub := live.NewHub()
+
 	// Create handlers
 	authHandler := api.NewAuthHandler(store)
-	listHandler := api.NewListHandler(store)
+	listHandler := api.NewListHandler(store, liveHub)
+	sharingHandler := api.NewSharingHandler(store, liveHub)
 
 	// Create router
 	router := mux.NewRouter()
@@ -61,6 +66,13 @@ func main() {
 	apiRouter.HandleFunc("/lists/{id}/items", listHandler.CreateItem).Methods("POST")
 	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.UpdateItem).Methods("PUT", "PATCH")
 	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.DeleteItem).Methods("DELETE")
+
+	// Sharing & Live routes
+	apiRouter.HandleFunc("/lists/{id}/live", sharingHandler.StreamLiveUpdates).Methods("GET")
+	apiRouter.HandleFunc("/lists/{id}/members", sharingHandler.GetMembers).Methods("GET")
+	apiRouter.HandleFunc("/lists/{id}/members", sharingHandler.InviteMember).Methods("POST")
+	apiRouter.HandleFunc("/lists/{id}/members/{userId}", sharingHandler.RemoveMember).Methods("DELETE")
+	apiRouter.HandleFunc("/lists/{id}/activities", sharingHandler.GetActivities).Methods("GET")
 
 	// Serve Service Worker with no-cache headers
 	router.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {

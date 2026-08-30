@@ -118,6 +118,10 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 		tokenString := auth.GetTokenFromHeader(authHeader)
 
 		if tokenString == "" {
+			tokenString = r.URL.Query().Get("token")
+		}
+
+		if tokenString == "" {
 			respondError(w, http.StatusUnauthorized, "Authorization header required")
 			return
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sejan/bazarlist/internal/live"
 	"github.com/sejan/bazarlist/internal/models"
 	"github.com/sejan/bazarlist/internal/storage"
 )
@@ -16,13 +17,26 @@ import (
 // ListHandler handles shopping list operations
 type ListHandler struct {
 	storage *storage.MySQLStorage
+	hub     *live.Hub
 }
 
 // NewListHandler creates a new list handler
-func NewListHandler(store *storage.MySQLStorage) *ListHandler {
+func NewListHandler(store *storage.MySQLStorage, hub *live.Hub) *ListHandler {
 	return &ListHandler{
 		storage: store,
+		hub:     hub,
 	}
+}
+
+func (h *ListHandler) getUserDisplayName(userID uint) string {
+	user, err := h.storage.GetUserByID(userID)
+	if err != nil || user == nil {
+		return "Someone"
+	}
+	if user.Name != "" {
+		return user.Name
+	}
+	return user.Email
 }
 
 // GetLists returns paginated lists for a specific month
@@ -131,15 +145,15 @@ func (h *ListHandler) GetList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := h.storage.GetListByID(listID)
-	if err != nil {
-		respondError(w, http.StatusNotFound, "List not found")
+	canView, err := h.storage.CanViewList(userID, listID)
+	if err != nil || !canView {
+		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
-	// Verify user owns the list
-	if list.UserID != userID {
-		respondError(w, http.StatusForbidden, "Access denied")
+	list, err := h.storage.GetListByID(listID)
+	if err != nil {
+		respondError(w, http.StatusNotFound, "List not found")
 		return
 	}
 
@@ -200,6 +214,12 @@ func (h *ListHandler) UpdateList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	canEdit, err := h.storage.CanEditList(userID, listID)
+	if err != nil || !canEdit {
+		respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
 	var req models.ListRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
@@ -209,12 +229,6 @@ func (h *ListHandler) UpdateList(w http.ResponseWriter, r *http.Request) {
 	list, err := h.storage.GetListByID(listID)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "List not found")
-		return
-	}
-
-	// Verify user owns the list
-	if list.UserID != userID {
-		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
@@ -252,14 +266,8 @@ func (h *ListHandler) DeleteList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := h.storage.GetListByID(listID)
-	if err != nil {
-		respondError(w, http.StatusNotFound, "List not found")
-		return
-	}
-
-	// Verify user owns the list
-	if list.UserID != userID {
+	isOwner, err := h.storage.IsListOwner(userID, listID)
+	if err != nil || !isOwner {
 		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -287,14 +295,8 @@ func (h *ListHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify user owns the list
-	list, err := h.storage.GetListByID(listID)
-	if err != nil {
-		respondError(w, http.StatusNotFound, "List not found")
-		return
-	}
-
-	if list.UserID != userID {
+	canView, err := h.storage.CanViewList(userID, listID)
+	if err != nil || !canView {
 		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -323,14 +325,8 @@ func (h *ListHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify user owns the list
-	list, err := h.storage.GetListByID(listID)
-	if err != nil {
-		respondError(w, http.StatusNotFound, "List not found")
-		return
-	}
-
-	if list.UserID != userID {
+	canEdit, err := h.storage.CanEditList(userID, listID)
+	if err != nil || !canEdit {
 		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -351,6 +347,23 @@ func (h *ListHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	if err := h.storage.CreateItem(item); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to create item")
 		return
+	}
+
+	userName := h.getUserDisplayName(userID)
+	activity := &models.ListActivity{
+		ListID:    listID,
+		UserID:    userID,
+		UserName:  userName,
+		Action:    models.ActionItemAdded,
+		ItemName:  item.Name,
+		Details:   fmt.Sprintf("Added %s (৳%.2f)", item.Name, item.Price),
+		CreatedAt: time.Now(),
+	}
+	_ = h.storage.LogActivity(activity)
+
+	if h.hub != nil {
+		h.hub.Broadcast(listID, "item_created", item)
+		h.hub.Broadcast(listID, "activity_logged", activity)
 	}
 
 	respondJSON(w, http.StatusCreated, item)
@@ -377,9 +390,8 @@ func (h *ListHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify user owns the list
-	list, err := h.storage.GetListByID(item.ListID)
-	if err != nil || list.UserID != userID {
+	canEdit, err := h.storage.CanEditList(userID, item.ListID)
+	if err != nil || !canEdit {
 		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -389,6 +401,9 @@ func (h *ListHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	wasPurchased := item.Purchased
+	oldName := item.Name
 
 	// Update fields
 	if req.Name != "" {
@@ -400,6 +415,39 @@ func (h *ListHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	if err := h.storage.UpdateItem(item); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to update item")
 		return
+	}
+
+	userName := h.getUserDisplayName(userID)
+	var action, details string
+	if !wasPurchased && item.Purchased {
+		action = models.ActionItemPurchased
+		details = fmt.Sprintf("Marked %s as purchased", item.Name)
+	} else if wasPurchased && !item.Purchased {
+		action = models.ActionItemUpdated
+		details = fmt.Sprintf("Marked %s as unpurchased", item.Name)
+	} else {
+		action = models.ActionItemUpdated
+		if oldName != item.Name {
+			details = fmt.Sprintf("Renamed %s to %s", oldName, item.Name)
+		} else {
+			details = fmt.Sprintf("Updated %s (৳%.2f)", item.Name, item.Price)
+		}
+	}
+
+	activity := &models.ListActivity{
+		ListID:    item.ListID,
+		UserID:    userID,
+		UserName:  userName,
+		Action:    action,
+		ItemName:  item.Name,
+		Details:   details,
+		CreatedAt: time.Now(),
+	}
+	_ = h.storage.LogActivity(activity)
+
+	if h.hub != nil {
+		h.hub.Broadcast(item.ListID, "item_updated", item)
+		h.hub.Broadcast(item.ListID, "activity_logged", activity)
 	}
 
 	respondJSON(w, http.StatusOK, item)
@@ -426,9 +474,8 @@ func (h *ListHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify user owns the list
-	list, err := h.storage.GetListByID(item.ListID)
-	if err != nil || list.UserID != userID {
+	canEdit, err := h.storage.CanEditList(userID, item.ListID)
+	if err != nil || !canEdit {
 		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -436,6 +483,26 @@ func (h *ListHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	if err := h.storage.DeleteItem(itemID); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to delete item")
 		return
+	}
+
+	userName := h.getUserDisplayName(userID)
+	activity := &models.ListActivity{
+		ListID:    item.ListID,
+		UserID:    userID,
+		UserName:  userName,
+		Action:    models.ActionItemDeleted,
+		ItemName:  item.Name,
+		Details:   fmt.Sprintf("Deleted %s", item.Name),
+		CreatedAt: time.Now(),
+	}
+	_ = h.storage.LogActivity(activity)
+
+	if h.hub != nil {
+		h.hub.Broadcast(item.ListID, "item_deleted", map[string]any{
+			"item_id": itemID,
+			"list_id": item.ListID,
+		})
+		h.hub.Broadcast(item.ListID, "activity_logged", activity)
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Item deleted successfully"})
