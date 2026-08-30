@@ -492,6 +492,15 @@
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    .summary-container {
+        flex: 1;
+        padding: 16px 16px 100px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-direction: column;
+    }
+
     .summary-section-card {
         background: white;
         border: 1px solid var(--border);
@@ -499,6 +508,8 @@
         padding: 16px;
         margin-bottom: 16px;
         box-shadow: var(--shadow-sm);
+        box-sizing: border-box;
+        width: 100%;
     }
 
     .summary-section-header {
@@ -524,6 +535,8 @@
         cursor: pointer;
         transition: all 0.2s;
         border: 1px solid var(--border);
+        box-sizing: border-box;
+        width: 100%;
     }
 
     .trip-breakdown-row:hover {
@@ -559,10 +572,10 @@
 
     /* Lists List */
     .lists-container {
-        padding: 8px;
+        padding: 8px 16px 90px;
         flex: 1;
         overflow-y: auto;
-        max-height: 80svh;
+        -webkit-overflow-scrolling: touch;
     }
 
     .list-card {
@@ -946,7 +959,7 @@
             </div>
 
             <!-- Summary View -->
-            <div id="summarySubView" class="hidden" style="flex: 1; padding: 16px; overflow-y: auto;">
+            <div id="summarySubView" class="hidden summary-container">
                 <!-- Month Filter for Summary -->
                 <div class="filter-bar" style="margin-bottom: 16px;">
                     <button class="filter-nav-btn" id="summaryPrevMonthBtn" onclick="navigateMonth(1)" title="Previous Month">

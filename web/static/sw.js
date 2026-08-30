@@ -1,5 +1,5 @@
 // Service Worker for Bazar List PWA
-const CACHE_NAME = 'bazarlist-shell-v6';
+const CACHE_NAME = 'bazarlist-shell-v7';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
