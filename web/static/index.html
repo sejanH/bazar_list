@@ -19,7 +19,6 @@
 <!-- PWA Metadata -->
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="BazarList">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
@@ -800,6 +799,7 @@
                     <span id="listTitle" style="font-size: 1rem;">List Items</span>
                 </div>
                 <div class="header-user">
+                    <span class="status-indicator-dot dot-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Online"></span>
                     <button class="logout-btn" onclick="shareAsImage()" title="Share as Image"
                         style="background: var(--primary); color: white;">
                         <i data-lucide="share-2" size="18"></i>

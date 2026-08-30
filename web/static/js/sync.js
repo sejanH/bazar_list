@@ -40,22 +40,24 @@ class SyncEngine {
   }
 
   async updateStatusUI() {
-    const statusDot = document.getElementById('networkStatusPill');
-    if (!statusDot) return;
+    const dots = document.querySelectorAll('.status-indicator-dot');
+    if (!dots || dots.length === 0) return;
 
     const isOnline = navigator.onLine;
     const pendingCount = await window.appDB.countOutbox();
 
-    if (!isOnline) {
-      statusDot.className = 'status-indicator-dot dot-offline';
-      statusDot.title = `Offline${pendingCount > 0 ? ` (${pendingCount} pending changes)` : ''}`;
-    } else if (this.isSyncing) {
-      statusDot.className = 'status-indicator-dot dot-syncing';
-      statusDot.title = 'Syncing changes...';
-    } else {
-      statusDot.className = 'status-indicator-dot dot-online';
-      statusDot.title = 'Online';
-    }
+    dots.forEach(dot => {
+      if (!isOnline) {
+        dot.className = 'status-indicator-dot dot-offline';
+        dot.title = `Offline${pendingCount > 0 ? ` (${pendingCount} pending changes)` : ''}`;
+      } else if (this.isSyncing) {
+        dot.className = 'status-indicator-dot dot-syncing';
+        dot.title = 'Syncing changes...';
+      } else {
+        dot.className = 'status-indicator-dot dot-online';
+        dot.title = 'Online';
+      }
+    });
   }
 
   async sync() {
