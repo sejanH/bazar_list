@@ -970,9 +970,6 @@
                         <span id="networkStatusPill" class="status-indicator-dot dot-online"></span>
                         <span id="usernameDisplay" class="user-name">User</span>
                     </div>
-                    <button class="logout-btn" onclick="logout()" title="Log out">
-                        <i data-lucide="log-out" size="18"></i>
-                    </button>
                 </div>
             </header>
 
@@ -1288,7 +1285,7 @@
             }
 
             if (token) {
-                showListsPage();
+                showSummaryPage();
             } else {
                 showLoginPage();
             }
@@ -1327,7 +1324,7 @@
                     currentUser = data.user || {};
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
-                    showListsPage();
+                    showSummaryPage();
                     if (window.syncEngine) window.syncEngine.sync();
                 } else {
                     showError(data.error || 'Invalid email or password');
@@ -1376,7 +1373,7 @@
                     currentUser = data.user || {};
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
-                    showListsPage();
+                    showSummaryPage();
                     if (window.syncEngine) window.syncEngine.sync();
                 } else {
                     showError(data.error || 'Registration failed');
@@ -1452,6 +1449,7 @@
             document.getElementById('listsSubView').classList.add('hidden');
             document.getElementById('summarySubView').classList.remove('hidden');
 
+            document.getElementById('usernameDisplay').textContent = currentUser.name || currentUser.email || 'User';
             updateNavActive('summary');
             loadSummaryData(currentMonth);
             lucide.createIcons();
