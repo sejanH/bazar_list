@@ -72,6 +72,11 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+// NewStorageWithDB creates a new MySQL storage instance with an existing DB connection (useful for testing)
+func NewStorageWithDB(db *gorm.DB) *MySQLStorage {
+	return &MySQLStorage{db: db}
+}
+
 // User Operations
 func (s *MySQLStorage) CreateUser(user *models.User) error {
 	return s.db.Create(user).Error
@@ -111,7 +116,7 @@ func (s *MySQLStorage) GetListByID(id uint) (*models.ShoppingList, error) {
 
 func (s *MySQLStorage) GetListsByUserID(userID uint) ([]models.ShoppingList, error) {
 	var lists []models.ShoppingList
-	err := s.db.Where("user_id = ?", userID).
+	err := s.db.Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
 		Order("date DESC, created_at DESC").
 		Preload("Items").
 		Find(&lists).Error
@@ -124,7 +129,8 @@ func (s *MySQLStorage) GetPaginatedListsByMonth(userID uint, year, month int, pa
 	var total int64
 
 	query := s.db.Model(&models.ShoppingList{}).
-		Where("user_id = ? AND YEAR(date) = ? AND MONTH(date) = ?", userID, year, month)
+		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
+		Where("YEAR(date) = ? AND MONTH(date) = ?", year, month)
 
 	// Get total count
 	if err := query.Count(&total).Error; err != nil {
@@ -151,7 +157,7 @@ func (s *MySQLStorage) GetLatestMonth(userID uint) (int, int, error) {
 
 	err := s.db.Model(&models.ShoppingList{}).
 		Select("YEAR(date) as year, MONTH(date) as month").
-		Where("user_id = ?", userID).
+		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
 		Order("date DESC").
 		First(&result).Error
 
@@ -169,7 +175,7 @@ func (s *MySQLStorage) GetMonthTotal(userID uint, year, month int) (float64, err
 	// Join items and shopping_lists to sum prices by user and month
 	err := s.db.Table("items").
 		Joins("JOIN shopping_lists ON items.list_id = shopping_lists.id").
-		Where("shopping_lists.user_id = ? AND YEAR(shopping_lists.date) = ? AND MONTH(shopping_lists.date) = ?", userID, year, month).
+		Where("(shopping_lists.user_id = ? OR shopping_lists.id IN (SELECT list_id FROM list_members WHERE user_id = ?)) AND YEAR(shopping_lists.date) = ? AND MONTH(shopping_lists.date) = ?", userID, userID, year, month).
 		Select("COALESCE(SUM(items.price), 0)").
 		Scan(&total).Error
 	
@@ -183,7 +189,7 @@ func (s *MySQLStorage) GetAvailableMonths(userID uint) ([]string, error) {
 	// Use Pluck to get formatted distinct months
 	err := s.db.Model(&models.ShoppingList{}).
 		Select("DISTINCT DATE_FORMAT(date, '%Y-%m') as month_str").
-		Where("user_id = ?", userID).
+		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
 		Order("month_str DESC").
 		Pluck("month_str", &months).Error
 	
@@ -200,6 +206,77 @@ func (s *MySQLStorage) UpdateList(list *models.ShoppingList) error {
 
 func (s *MySQLStorage) DeleteList(id uint) error {
 	return s.db.Delete(&models.ShoppingList{}, id).Error
+}
+
+// Permission Operations
+func (s *MySQLStorage) CanViewList(userID, listID uint) (bool, error) {
+	var count int64
+	err := s.db.Model(&models.ShoppingList{}).
+		Where("id = ? AND (user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?))", listID, userID, userID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func (s *MySQLStorage) CanEditList(userID, listID uint) (bool, error) {
+	var count int64
+	// Owner or editor member
+	err := s.db.Model(&models.ShoppingList{}).
+		Where("id = ? AND (user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ? AND role IN ('owner', 'editor')))", listID, userID, userID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func (s *MySQLStorage) IsListOwner(userID, listID uint) (bool, error) {
+	var count int64
+	err := s.db.Model(&models.ShoppingList{}).
+		Where("id = ? AND user_id = ?", listID, userID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// Member Management Operations
+func (s *MySQLStorage) AddListMember(listID, userID uint, role string) error {
+	if role == "" {
+		role = models.RoleEditor
+	}
+	member := models.ListMember{
+		ListID: listID,
+		UserID: userID,
+		Role:   role,
+	}
+	return s.db.Where(models.ListMember{ListID: listID, UserID: userID}).
+		Assign(models.ListMember{Role: role}).
+		FirstOrCreate(&member).Error
+}
+
+func (s *MySQLStorage) UpdateMemberRole(listID, userID uint, role string) error {
+	return s.db.Model(&models.ListMember{}).
+		Where("list_id = ? AND user_id = ?", listID, userID).
+		Update("role", role).Error
+}
+
+func (s *MySQLStorage) RemoveListMember(listID, userID uint) error {
+	return s.db.Where("list_id = ? AND user_id = ?", listID, userID).Delete(&models.ListMember{}).Error
+}
+
+func (s *MySQLStorage) GetListMembers(listID uint) ([]models.ListMember, error) {
+	var members []models.ListMember
+	err := s.db.Preload("User").Where("list_id = ?", listID).Find(&members).Error
+	return members, err
+}
+
+// Activity Log Operations
+func (s *MySQLStorage) LogActivity(activity *models.ListActivity) error {
+	return s.db.Create(activity).Error
+}
+
+func (s *MySQLStorage) GetListActivities(listID uint, limit int) ([]models.ListActivity, error) {
+	if limit <= 0 || limit > 50 {
+		limit = 20
+	}
+	var activities []models.ListActivity
+	err := s.db.Where("list_id = ?", listID).Order("created_at desc").Limit(limit).Find(&activities).Error
+	return activities, err
 }
 
 // Item Operations
