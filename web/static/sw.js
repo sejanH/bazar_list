@@ -1,10 +1,11 @@
 // Service Worker for Bazar List PWA
-const CACHE_NAME = 'bazarlist-shell-v11';
+const CACHE_NAME = 'bazarlist-shell-v12';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/icon.svg',
+  '/js/live.js'
 ];
 
 // Install event: Precache core app shell
