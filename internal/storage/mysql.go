@@ -35,6 +35,7 @@ func NewMySQLStorage(config DatabaseConfig) (*MySQLStorage, error) {
 	)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
 		NowFunc: func() time.Time {
 			return time.Now().Local()
 		},
@@ -123,14 +124,23 @@ func (s *MySQLStorage) GetListsByUserID(userID uint) ([]models.ShoppingList, err
 	return lists, err
 }
 
+func isSQLite(db *gorm.DB) bool {
+	return db.Dialector != nil && db.Dialector.Name() == "sqlite"
+}
+
 // GetPaginatedListsByMonth fetches lists for a specific month with pagination
 func (s *MySQLStorage) GetPaginatedListsByMonth(userID uint, year, month int, page, limit int) ([]models.ShoppingList, int64, error) {
 	var lists []models.ShoppingList
 	var total int64
 
 	query := s.db.Model(&models.ShoppingList{}).
-		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
-		Where("YEAR(date) = ? AND MONTH(date) = ?", year, month)
+		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID)
+
+	if isSQLite(s.db) {
+		query = query.Where("strftime('%Y-%m', date) = ?", fmt.Sprintf("%04d-%02d", year, month))
+	} else {
+		query = query.Where("YEAR(date) = ? AND MONTH(date) = ?", year, month)
+	}
 
 	// Get total count
 	if err := query.Count(&total).Error; err != nil {
@@ -155,8 +165,13 @@ func (s *MySQLStorage) GetLatestMonth(userID uint) (int, int, error) {
 		Month int
 	}
 
+	selectClause := "YEAR(date) as year, MONTH(date) as month"
+	if isSQLite(s.db) {
+		selectClause = "CAST(strftime('%Y', date) AS INTEGER) as year, CAST(strftime('%m', date) AS INTEGER) as month"
+	}
+
 	err := s.db.Model(&models.ShoppingList{}).
-		Select("YEAR(date) as year, MONTH(date) as month").
+		Select(selectClause).
 		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
 		Order("date DESC").
 		First(&result).Error
@@ -172,10 +187,21 @@ func (s *MySQLStorage) GetLatestMonth(userID uint) (int, int, error) {
 func (s *MySQLStorage) GetMonthTotal(userID uint, year, month int) (float64, error) {
 	var total float64
 	
+	whereClause := "(shopping_lists.user_id = ? OR shopping_lists.id IN (SELECT list_id FROM list_members WHERE user_id = ?)) AND YEAR(shopping_lists.date) = ? AND MONTH(shopping_lists.date) = ?"
+	if isSQLite(s.db) {
+		whereClause = "(shopping_lists.user_id = ? OR shopping_lists.id IN (SELECT list_id FROM list_members WHERE user_id = ?)) AND strftime('%Y-%m', shopping_lists.date) = ?"
+		err := s.db.Table("items").
+			Joins("JOIN shopping_lists ON items.list_id = shopping_lists.id").
+			Where(whereClause, userID, userID, fmt.Sprintf("%04d-%02d", year, month)).
+			Select("COALESCE(SUM(items.price), 0)").
+			Scan(&total).Error
+		return total, err
+	}
+	
 	// Join items and shopping_lists to sum prices by user and month
 	err := s.db.Table("items").
 		Joins("JOIN shopping_lists ON items.list_id = shopping_lists.id").
-		Where("(shopping_lists.user_id = ? OR shopping_lists.id IN (SELECT list_id FROM list_members WHERE user_id = ?)) AND YEAR(shopping_lists.date) = ? AND MONTH(shopping_lists.date) = ?", userID, userID, year, month).
+		Where(whereClause, userID, userID, year, month).
 		Select("COALESCE(SUM(items.price), 0)").
 		Scan(&total).Error
 	
@@ -186,9 +212,14 @@ func (s *MySQLStorage) GetMonthTotal(userID uint, year, month int) (float64, err
 func (s *MySQLStorage) GetAvailableMonths(userID uint) ([]string, error) {
 	months := []string{}
 	
+	selectClause := "DISTINCT DATE_FORMAT(date, '%Y-%m') as month_str"
+	if isSQLite(s.db) {
+		selectClause = "DISTINCT strftime('%Y-%m', date) as month_str"
+	}
+
 	// Use Pluck to get formatted distinct months
 	err := s.db.Model(&models.ShoppingList{}).
-		Select("DISTINCT DATE_FORMAT(date, '%Y-%m') as month_str").
+		Select(selectClause).
 		Where("user_id = ? OR id IN (SELECT list_id FROM list_members WHERE user_id = ?)", userID, userID).
 		Order("month_str DESC").
 		Pluck("month_str", &months).Error
