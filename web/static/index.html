@@ -232,62 +232,35 @@
         gap: 8px;
     }
 
-    /* PWA Network Status & Install Styles */
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        user-select: none;
-    }
-
-    .status-online {
-        background: #ecfdf5;
-        color: #059669;
-        border: 1px solid #a7f3d0;
-    }
-
-    .status-offline {
-        background: #fef2f2;
-        color: #dc2626;
-        border: 1px solid #fecaca;
-    }
-
-    .status-pending {
-        background: #fffbeb;
-        color: #d97706;
-        border: 1px solid #fde68a;
-    }
-
-    .status-syncing {
-        background: #eff6ff;
-        color: #2563eb;
-        border: 1px solid #bfdbfe;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
+    /* PWA Network Status Indicator Dot */
+    .status-indicator-dot {
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
     }
 
-    .dot-online { background-color: #10b981; }
-    .dot-offline { background-color: #ef4444; }
-    .dot-pending { background-color: #f59e0b; }
+    .dot-online {
+        background-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .dot-offline {
+        background-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+
     .dot-syncing {
-        background-color: #3b82f6;
-        animation: pulse 1.5s infinite;
+        background-color: #10b981;
+        animation: dot-pulse 1.2s infinite ease-in-out;
     }
 
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.85); }
+    @keyframes dot-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+        50% { transform: scale(0.8); opacity: 0.6; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
     }
 
     .pwa-install-btn {
@@ -752,10 +725,7 @@
                         <i data-lucide="download" size="14"></i>
                         <span>Install</span>
                     </button>
-                    <div id="networkStatusPill" class="status-pill status-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Tap to sync with server">
-                        <span class="status-dot dot-online"></span>
-                        <span>Online</span>
-                    </div>
+                    <span id="networkStatusPill" class="status-indicator-dot dot-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Online"></span>
                     <span id="usernameDisplay" class="user-name">User</span>
                 </div>
             </header>

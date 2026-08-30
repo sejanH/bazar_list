@@ -40,36 +40,21 @@ class SyncEngine {
   }
 
   async updateStatusUI() {
-    const statusPill = document.getElementById('networkStatusPill');
-    if (!statusPill) return;
+    const statusDot = document.getElementById('networkStatusPill');
+    if (!statusDot) return;
 
     const isOnline = navigator.onLine;
     const pendingCount = await window.appDB.countOutbox();
 
     if (!isOnline) {
-      statusPill.className = 'status-pill status-offline';
-      statusPill.innerHTML = `
-        <span class="status-dot dot-offline"></span>
-        <span>Offline ${pendingCount > 0 ? `(${pendingCount} pending)` : ''}</span>
-      `;
+      statusDot.className = 'status-indicator-dot dot-offline';
+      statusDot.title = `Offline${pendingCount > 0 ? ` (${pendingCount} pending changes)` : ''}`;
     } else if (this.isSyncing) {
-      statusPill.className = 'status-pill status-syncing';
-      statusPill.innerHTML = `
-        <span class="status-dot dot-syncing spinner-icon"></span>
-        <span>Syncing changes...</span>
-      `;
-    } else if (pendingCount > 0) {
-      statusPill.className = 'status-pill status-pending';
-      statusPill.innerHTML = `
-        <span class="status-dot dot-pending"></span>
-        <span>${pendingCount} pending sync</span>
-      `;
+      statusDot.className = 'status-indicator-dot dot-syncing';
+      statusDot.title = 'Syncing changes...';
     } else {
-      statusPill.className = 'status-pill status-online';
-      statusPill.innerHTML = `
-        <span class="status-dot dot-online"></span>
-        <span>Online</span>
-      `;
+      statusDot.className = 'status-indicator-dot dot-online';
+      statusDot.title = 'Online';
     }
   }
 
