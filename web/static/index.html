@@ -1182,14 +1182,16 @@
                 ...options.headers
             };
 
-            if (token) {
+            const isAuthEndpoint = endpoint.includes('/auth/');
+
+            if (token && !isAuthEndpoint) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
             try {
                 const response = await fetch(endpoint, { ...options, headers });
 
-                if (response.status === 401) {
+                if (response.status === 401 && !isAuthEndpoint) {
                     console.warn('Token expired or invalid, logging out...');
                     logout();
                     return null;
@@ -1230,8 +1232,18 @@
         // Auth Functions
         async function login(e) {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Sign In';
+
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) errorDiv.classList.add('hidden');
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Signing In...';
+            }
 
             try {
                 const response = await apiFetch(`${API_BASE}/auth/login`, {
@@ -1239,29 +1251,48 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                if (!response) return;
+                if (!response) {
+                    showError('Unable to connect to server.');
+                    return;
+                }
 
                 const data = await response.json();
-                if (response.ok) {
+                if (response.ok && data.token) {
                     token = data.token;
-                    currentUser = data.user;
+                    currentUser = data.user || {};
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     showListsPage();
                     if (window.syncEngine) window.syncEngine.sync();
                 } else {
-                    showError(data.error || 'Login failed');
+                    showError(data.error || 'Invalid email or password');
                 }
             } catch (error) {
-                showError('Network error. Check connection.');
+                showError('Network error. Check server connection.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                    lucide.createIcons();
+                }
             }
         }
 
         async function register(e) {
             e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Create Account';
+
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) errorDiv.classList.add('hidden');
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Creating Account...';
+            }
 
             try {
                 const response = await apiFetch(`${API_BASE}/auth/register`, {
@@ -1269,12 +1300,15 @@
                     body: JSON.stringify({ name, email, password })
                 });
 
-                if (!response) return;
+                if (!response) {
+                    showError('Unable to connect to server.');
+                    return;
+                }
 
                 const data = await response.json();
-                if (response.ok) {
+                if (response.ok && data.token) {
                     token = data.token;
-                    currentUser = data.user;
+                    currentUser = data.user || {};
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     showListsPage();
@@ -1283,7 +1317,13 @@
                     showError(data.error || 'Registration failed');
                 }
             } catch (error) {
-                showError('Network error. Check connection.');
+                showError('Network error. Check server connection.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                    lucide.createIcons();
+                }
             }
         }
 
