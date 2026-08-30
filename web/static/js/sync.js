@@ -47,6 +47,8 @@ class SyncEngine {
     const pendingCount = await window.appDB.countOutbox();
 
     dots.forEach(dot => {
+      dot.innerHTML = '';
+      dot.textContent = '';
       if (!isOnline) {
         dot.className = 'status-indicator-dot dot-offline';
         dot.title = `Offline${pendingCount > 0 ? ` (${pendingCount} pending changes)` : ''}`;
