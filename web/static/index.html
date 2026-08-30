@@ -317,60 +317,244 @@
         color: var(--danger);
     }
 
-    /* Stats Cards */
-    .month-summary {
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        margin: 16px;
-        border-radius: var(--radius);
-        padding: 20px;
-        color: white;
-        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
-    }
-
-    .summary-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        opacity: 0.8;
-        margin-bottom: 4px;
-    }
-
-    .summary-value {
-        font-size: 1.75rem;
-        font-weight: 800;
-        margin-bottom: 12px;
-    }
-
-    .summary-meta {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.875rem;
-        padding-top: 12px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* Controls */
+    /* Filter Bar Styles */
     .controls-row {
-        padding: 0 16px 16px;
+        padding: 0 16px 12px;
     }
 
-    .month-pill {
-        background: #f3f4f6;
-        padding: 10px 16px;
-        border-radius: 12px;
+    .filter-bar {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 6px 10px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .filter-nav-btn {
+        background: #f3f4f6;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+
+    .filter-nav-btn:hover:not(:disabled) {
+        background: #e5e7eb;
+        color: var(--primary);
+    }
+
+    .filter-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .filter-select-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .month-select {
         background: transparent;
         border: none;
         font-family: inherit;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 0.95rem;
         color: var(--text-main);
         outline: none;
         cursor: pointer;
+        text-align: center;
+        text-align-last: center;
+    }
+
+    .filter-count-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--primary);
+        background: #eef2ff;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    /* Summary Tab Components */
+    .summary-hero-card {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 18px;
+        padding: 22px 20px;
+        color: white;
+        box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.35);
+        margin-bottom: 16px;
+    }
+
+    .summary-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.85;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .summary-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.02em;
+    }
+
+    .summary-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stats-cards-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .stat-card-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef2ff;
+        color: var(--primary);
+    }
+
+    .stat-card-title {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .stat-card-value {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .stat-card-sub {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 4px;
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--success);
+        border-radius: 999px;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .summary-section-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .summary-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .summary-section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .trip-breakdown-row {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #f9fafb;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--border);
+    }
+
+    .trip-breakdown-row:hover {
+        background: #f3f4f6;
+        border-color: var(--primary-light);
+        transform: translateX(2px);
+    }
+
+    .trip-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .trip-row-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .trip-row-price {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 0.875rem;
+    }
+
+    .trip-row-bottom {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-dim);
     }
 
     /* Lists List */
@@ -732,10 +916,17 @@
             <!-- Lists View -->
             <div id="listsSubView" style="flex: 1; display: flex; flex-direction: column;">
                 <div class="controls-row" style="margin-top: 16px;">
-                    <div class="month-pill">
-                        <i data-lucide="calendar" size="16" class="text-dim"></i>
-                        <select id="monthSelect" class="month-select" onchange="changeMonth(this.value)"></select>
-                        <i data-lucide="chevron-down" size="16" class="text-dim"></i>
+                    <div class="filter-bar">
+                        <button class="filter-nav-btn" id="listPrevMonthBtn" onclick="navigateMonth(1)" title="Previous Month">
+                            <i data-lucide="chevron-left" size="16"></i>
+                        </button>
+                        <div class="filter-select-wrapper">
+                            <i data-lucide="calendar" size="16" class="text-primary"></i>
+                            <select id="monthSelect" class="month-select" onchange="changeMonth(this.value)"></select>
+                        </div>
+                        <button class="filter-nav-btn" id="listNextMonthBtn" onclick="navigateMonth(-1)" title="Next Month">
+                            <i data-lucide="chevron-right" size="16"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -755,33 +946,88 @@
             </div>
 
             <!-- Summary View -->
-            <div id="summarySubView" class="hidden" style="flex: 1; padding: 16px;">
-                <div class="month-summary" style="margin: 0 0 20px 0;">
+            <div id="summarySubView" class="hidden" style="flex: 1; padding: 16px; overflow-y: auto;">
+                <!-- Month Filter for Summary -->
+                <div class="filter-bar" style="margin-bottom: 16px;">
+                    <button class="filter-nav-btn" id="summaryPrevMonthBtn" onclick="navigateMonth(1)" title="Previous Month">
+                        <i data-lucide="chevron-left" size="16"></i>
+                    </button>
+                    <div class="filter-select-wrapper">
+                        <i data-lucide="calendar" size="16" class="text-primary"></i>
+                        <select id="summaryMonthSelect" class="month-select" onchange="changeMonth(this.value)"></select>
+                    </div>
+                    <button class="filter-nav-btn" id="summaryNextMonthBtn" onclick="navigateMonth(-1)" title="Next Month">
+                        <i data-lucide="chevron-right" size="16"></i>
+                    </button>
+                </div>
+
+                <!-- Hero Card -->
+                <div class="summary-hero-card">
                     <div class="summary-label">Monthly Expenditure</div>
-                    <div id="monthTotalAmount" class="summary-value">৳0.00</div>
+                    <div id="summaryHeroTotal" class="summary-value">৳0.00</div>
                     <div class="summary-meta">
-                        <span id="currentMonthDisplay">Loading...</span>
-                        <span><span id="totalItemsBadge">0</span> lists</span>
+                        <span id="summaryHeroMonth">Loading...</span>
+                        <span><span id="summaryHeroListsCount">0</span> lists</span>
                     </div>
                 </div>
 
-                <div
-                    style="background: white; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                        <div
-                            style="width: 40px; height: 40px; background: #eef2ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
-                            <i data-lucide="trending-up" size="20"></i>
+                <!-- 2x2 Stats Grid -->
+                <div class="stats-cards-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Shopping Trips</span>
+                            <div class="stat-card-icon"><i data-lucide="shopping-bag" size="16"></i></div>
                         </div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1rem;">Spending Insights</div>
-                            <div style="font-size: 0.75rem; color: var(--text-dim);">Your shopping activity this month
-                            </div>
+                        <div class="stat-card-value" id="summaryTripsCount">0</div>
+                        <div class="stat-card-sub" id="summaryTripsSub">Lists this month</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Avg. / Trip</span>
+                            <div class="stat-card-icon"><i data-lucide="calculator" size="16"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="summaryAvgTrip">৳0.00</div>
+                        <div class="stat-card-sub">Per shopping list</div>
+                    </div>
+
+                    <div class="stat-card" style="grid-column: span 2;">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Items Purchased</span>
+                            <span class="filter-count-badge" id="summaryItemsPercent">0%</span>
+                        </div>
+                        <div class="stat-card-value" id="summaryItemsRatio">0 / 0 items</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="summaryProgressBar" style="width: 0%;"></div>
                         </div>
                     </div>
-                    <div
-                        style="padding: 16px; background: #f9fafb; border-radius: 12px; border: 1px dashed var(--border);">
-                        <p style="font-size: 0.875rem; color: var(--text-dim); text-align: center;">Detailed analytics
-                            and spending charts will appear here as you add more items to your lists.</p>
+                </div>
+
+                <!-- Shopping Trips Breakdown -->
+                <div class="summary-section-card">
+                    <div class="summary-section-header">
+                        <div class="summary-section-title">
+                            <i data-lucide="list-checks" class="text-primary" size="18"></i>
+                            Shopping Trips Breakdown
+                        </div>
+                        <span class="user-name" id="summaryTripsBadge">0 lists</span>
+                    </div>
+                    <div id="summaryTripsList">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Top Purchases Breakdown -->
+                <div class="summary-section-card">
+                    <div class="summary-section-header">
+                        <div class="summary-section-title">
+                            <i data-lucide="sparkles" class="text-primary" size="18"></i>
+                            Top Items by Cost
+                        </div>
+                        <span class="user-name">Ranked</span>
+                    </div>
+                    <div id="summaryTopItemsList">
+                        <!-- Rendered by JS -->
                     </div>
                 </div>
             </div>
@@ -890,6 +1136,7 @@
         let currentPage = 1;
         let currentLimit = 10;
         let totalPages = 1;
+        let availableMonths = [];
 
         // PWA Installation state
         let deferredPrompt = null;
@@ -963,7 +1210,12 @@
                     if (currentListId) {
                         loadListDetails(currentListId);
                     } else if (token) {
-                        loadLists();
+                        const isSummary = !document.getElementById('summarySubView').classList.contains('hidden');
+                        if (isSummary) {
+                            loadSummaryData();
+                        } else {
+                            loadLists();
+                        }
                     }
                 });
             }
@@ -1078,7 +1330,7 @@
             document.getElementById('summarySubView').classList.add('hidden');
 
             document.getElementById('usernameDisplay').textContent = currentUser.name || currentUser.email || 'User';
-            loadLists();
+            loadLists(currentMonth);
             lucide.createIcons();
             updateNavActive('lists');
         }
@@ -1096,6 +1348,7 @@
             document.getElementById('summarySubView').classList.remove('hidden');
 
             updateNavActive('summary');
+            loadSummaryData(currentMonth);
             lucide.createIcons();
         }
 
@@ -1130,6 +1383,82 @@
             currentListCache = null;
         }
 
+        // --- Month Filter Helpers ---
+
+        function updateMonthSelects(months, activeMonth) {
+            if (!months || months.length === 0) {
+                if (activeMonth) months = [activeMonth];
+                else {
+                    const now = new Date();
+                    months = [`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`];
+                }
+            }
+
+            // Ensure activeMonth is in list
+            if (activeMonth && !months.includes(activeMonth)) {
+                months = [activeMonth, ...months];
+            }
+
+            availableMonths = months;
+            currentMonth = activeMonth || months[0];
+
+            const optionsHtml = availableMonths.map(m => `
+                <option value="${m}" ${m === currentMonth ? 'selected' : ''}>${formatMonth(m)}</option>
+            `).join('');
+
+            const monthSelect = document.getElementById('monthSelect');
+            if (monthSelect) monthSelect.innerHTML = optionsHtml;
+
+            const summaryMonthSelect = document.getElementById('summaryMonthSelect');
+            if (summaryMonthSelect) summaryMonthSelect.innerHTML = optionsHtml;
+
+            // Update arrow button disabled states
+            const currIdx = availableMonths.indexOf(currentMonth);
+            const prevDisabled = currIdx >= availableMonths.length - 1;
+            const nextDisabled = currIdx <= 0;
+
+            ['listPrevMonthBtn', 'summaryPrevMonthBtn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = prevDisabled;
+            });
+
+            ['listNextMonthBtn', 'summaryNextMonthBtn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = nextDisabled;
+            });
+        }
+
+        function navigateMonth(direction) {
+            if (!availableMonths || availableMonths.length === 0) return;
+            const currentIndex = availableMonths.indexOf(currentMonth);
+            const targetIndex = currentIndex + direction;
+
+            if (targetIndex >= 0 && targetIndex < availableMonths.length) {
+                changeMonth(availableMonths[targetIndex]);
+            }
+        }
+
+        function changeMonth(newMonth) {
+            currentMonth = newMonth;
+
+            // Sync select values
+            const monthSelect = document.getElementById('monthSelect');
+            if (monthSelect) monthSelect.value = newMonth;
+
+            const summaryMonthSelect = document.getElementById('summaryMonthSelect');
+            if (summaryMonthSelect) summaryMonthSelect.value = newMonth;
+
+            updateMonthSelects(availableMonths, newMonth);
+
+            const isSummaryVisible = !document.getElementById('summarySubView').classList.contains('hidden');
+            if (isSummaryVisible) {
+                loadSummaryData(newMonth);
+            } else {
+                currentPage = 1;
+                loadLists(newMonth, 1);
+            }
+        }
+
         // --- Data Loading & Offline-First Handlers ---
 
         async function loadLists(month = currentMonth, page = currentPage) {
@@ -1140,6 +1469,10 @@
                 const cachedLists = await window.appDB.getListsByMonth(month, currentUser.id);
                 const cachedMonths = await window.appDB.getMeta('available_months_' + currentUser.id) || [];
                 
+                if (cachedMonths.length > 0) {
+                    updateMonthSelects(cachedMonths, month || currentMonth);
+                }
+
                 if (cachedLists && cachedLists.length > 0) {
                     const totalMonthAmount = cachedLists.reduce((sum, l) => {
                         const listTotal = (l.items || []).reduce((itemSum, item) => itemSum + (item.price || 0), 0);
@@ -1181,12 +1514,13 @@
                         currentPage = data.pagination ? data.pagination.current_page : 1;
                         totalPages = data.pagination ? data.pagination.total_pages : 1;
 
-                        // Save fresh data to IndexedDB
-                        await window.appDB.saveLists(data.lists || [], data.month, currentUser.id);
                         if (data.available_months) {
+                            updateMonthSelects(data.available_months, data.month);
                             await window.appDB.setMeta('available_months_' + currentUser.id, data.available_months);
                         }
 
+                        // Save fresh data to IndexedDB
+                        await window.appDB.saveLists(data.lists || [], data.month, currentUser.id);
                         displayLists(data);
                     }
                 } catch (error) {
@@ -1202,23 +1536,8 @@
 
                 const lists = data.lists || [];
 
-                // Update month selector & display
-                const monthDisplay = document.getElementById('currentMonthDisplay');
-                if (monthDisplay) monthDisplay.textContent = formatMonth(data.month);
-
-                const badge = document.getElementById('totalItemsBadge');
-                if (badge) badge.textContent = data.pagination ? data.pagination.total_items : lists.length;
-
-                const monthTotalAmount = document.getElementById('monthTotalAmount');
-                if (monthTotalAmount) {
-                    monthTotalAmount.textContent = `৳${(data.total_amount || 0).toFixed(2)}`;
-                }
-
-                const monthSelect = document.getElementById('monthSelect');
-                if (monthSelect && data.available_months && data.available_months.length > 0) {
-                    monthSelect.innerHTML = data.available_months.map(m => `
-                        <option value="${m}" ${m === data.month ? 'selected' : ''}>${formatMonth(m)}</option>
-                    `).join('');
+                if (data.available_months) {
+                    updateMonthSelects(data.available_months, data.month);
                 }
 
                 // Update pagination
@@ -1243,8 +1562,8 @@
                     container.innerHTML = `
                         <div class="empty-view">
                             <i data-lucide="clipboard-list" size="48"></i>
-                            <p>No shopping lists for this month</p>
-                            <p style="font-size: 0.8rem; margin-top: 8px;">Tap + to create your first list</p>
+                            <p>No shopping lists for ${formatMonth(data.month || currentMonth)}</p>
+                            <p style="font-size: 0.8rem; margin-top: 8px;">Tap + to create a shopping list</p>
                         </div>
                     `;
                     lucide.createIcons();
@@ -1258,6 +1577,8 @@
                         : list.date;
 
                     const isTemp = typeof list.id === 'string' && list.id.startsWith('temp_');
+                    const itemsCount = list.items ? list.items.length : 0;
+                    const listTotal = (list.items || []).reduce((s, i) => s + (i.price || 0), 0);
 
                     return `
                     <div class="list-card" onclick="showListPage('${list.id}')">
@@ -1268,7 +1589,8 @@
                             </div>
                             <div class="list-info">
                                 <span><i data-lucide="calendar" size="12" style="display:inline; vertical-align:middle; margin-right:4px"></i>${dateStr}</span>
-                                <span><i data-lucide="package" size="12" style="display:inline; vertical-align:middle; margin-right:4px"></i>${list.items ? list.items.length : 0} items</span>
+                                <span><i data-lucide="package" size="12" style="display:inline; vertical-align:middle; margin-right:4px"></i>${itemsCount} items</span>
+                                <span style="font-weight:700; color:var(--primary)">৳${listTotal.toFixed(2)}</span>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -1284,6 +1606,179 @@
             }
         }
 
+        // --- Summary Tab Data Handler ---
+
+        async function loadSummaryData(month = currentMonth) {
+            let lists = [];
+            const targetMonth = month || currentMonth;
+
+            // 1. Read from IndexedDB
+            try {
+                lists = await window.appDB.getListsByMonth(targetMonth, currentUser.id);
+                const cachedMonths = await window.appDB.getMeta('available_months_' + currentUser.id) || [];
+                if (cachedMonths.length > 0) {
+                    updateMonthSelects(cachedMonths, targetMonth);
+                }
+                renderSummaryView(targetMonth, lists);
+            } catch (err) {
+                console.warn('IndexedDB summary read error:', err);
+            }
+
+            // 2. Fetch all lists for this month from API if online
+            if (navigator.onLine && token) {
+                try {
+                    let url = `${API_BASE}/lists?limit=100`;
+                    if (targetMonth) url += `&month=${targetMonth}`;
+
+                    const res = await apiFetch(url);
+                    if (res && res.ok) {
+                        const data = await res.json();
+                        lists = data.lists || [];
+                        if (data.available_months) {
+                            updateMonthSelects(data.available_months, data.month || targetMonth);
+                            await window.appDB.setMeta('available_months_' + currentUser.id, data.available_months);
+                        }
+                        await window.appDB.saveLists(lists, data.month || targetMonth, currentUser.id);
+                        renderSummaryView(data.month || targetMonth, lists);
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch online summary data, rendered from cache.');
+                }
+            }
+        }
+
+        function renderSummaryView(month, lists = []) {
+            const formattedMonth = formatMonth(month);
+
+            // Calculations
+            let totalAmount = 0;
+            let totalItems = 0;
+            let purchasedItems = 0;
+            const allItems = [];
+
+            lists.forEach(l => {
+                const listItems = l.items || [];
+                listItems.forEach(item => {
+                    const p = item.price || 0;
+                    totalAmount += p;
+                    totalItems++;
+                    if (item.purchased) purchasedItems++;
+                    allItems.push({
+                        ...item,
+                        listName: l.name || 'List',
+                        listDate: l.date
+                    });
+                });
+            });
+
+            const listsCount = lists.length;
+            const avgPerTrip = listsCount > 0 ? (totalAmount / listsCount) : 0;
+            const completionPercent = totalItems > 0 ? Math.round((purchasedItems / totalItems) * 100) : 0;
+
+            // Update Hero Card
+            const heroTotal = document.getElementById('summaryHeroTotal');
+            if (heroTotal) heroTotal.textContent = `৳${totalAmount.toFixed(2)}`;
+
+            const heroMonth = document.getElementById('summaryHeroMonth');
+            if (heroMonth) heroMonth.textContent = formattedMonth;
+
+            const heroListsCount = document.getElementById('summaryHeroListsCount');
+            if (heroListsCount) heroListsCount.textContent = listsCount;
+
+            // Update 2x2 Stats
+            const tripsCountEl = document.getElementById('summaryTripsCount');
+            if (tripsCountEl) tripsCountEl.textContent = listsCount;
+
+            const tripsSubEl = document.getElementById('summaryTripsSub');
+            if (tripsSubEl) tripsSubEl.textContent = listsCount === 1 ? '1 list created' : `${listsCount} lists created`;
+
+            const avgTripEl = document.getElementById('summaryAvgTrip');
+            if (avgTripEl) avgTripEl.textContent = `৳${avgPerTrip.toFixed(2)}`;
+
+            const itemsRatioEl = document.getElementById('summaryItemsRatio');
+            if (itemsRatioEl) itemsRatioEl.textContent = `${purchasedItems} / ${totalItems} items`;
+
+            const itemsPercentEl = document.getElementById('summaryItemsPercent');
+            if (itemsPercentEl) itemsPercentEl.textContent = `${completionPercent}%`;
+
+            const progressBar = document.getElementById('summaryProgressBar');
+            if (progressBar) progressBar.style.width = `${completionPercent}%`;
+
+            const tripsBadge = document.getElementById('summaryTripsBadge');
+            if (tripsBadge) tripsBadge.textContent = `${listsCount} lists`;
+
+            // Render Shopping Trips Breakdown
+            const tripsContainer = document.getElementById('summaryTripsList');
+            if (tripsContainer) {
+                if (lists.length === 0) {
+                    tripsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.85rem;">
+                            No shopping lists in ${formattedMonth}
+                        </div>
+                    `;
+                } else {
+                    tripsContainer.innerHTML = lists.map(list => {
+                        const listDate = new Date(list.date);
+                        const dateStr = !isNaN(listDate.getTime()) 
+                            ? listDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : list.date;
+
+                        const tripTotal = (list.items || []).reduce((s, i) => s + (i.price || 0), 0);
+                        const tripPercent = totalAmount > 0 ? Math.min(100, Math.round((tripTotal / totalAmount) * 100)) : 0;
+                        const itemsCount = list.items ? list.items.length : 0;
+
+                        return `
+                            <div class="trip-breakdown-row" onclick="showListPage('${list.id}')">
+                                <div class="trip-row-top">
+                                    <span class="trip-row-name">${escapeHtml(list.name || 'Shopping List')}</span>
+                                    <span class="trip-row-price">৳${tripTotal.toFixed(2)}</span>
+                                </div>
+                                <div class="progress-bar-container" style="margin: 4px 0 6px 0; height: 4px;">
+                                    <div class="progress-bar-fill" style="width: ${tripPercent}%; background: var(--primary);"></div>
+                                </div>
+                                <div class="trip-row-bottom">
+                                    <span>${dateStr} • ${itemsCount} items</span>
+                                    <span>${tripPercent}% of month</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // Render Top Expenses Breakdown
+            const topItemsContainer = document.getElementById('summaryTopItemsList');
+            if (topItemsContainer) {
+                allItems.sort((a, b) => (b.price || 0) - (a.price || 0));
+                const top5 = allItems.slice(0, 5);
+
+                if (top5.length === 0) {
+                    topItemsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.85rem;">
+                            No items logged yet
+                        </div>
+                    `;
+                } else {
+                    topItemsContainer.innerHTML = top5.map((item, idx) => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-dim); width: 16px;">#${idx + 1}</span>
+                                <div>
+                                    <div style="font-weight: 600; font-size: 0.875rem;">${escapeHtml(item.name)}</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(item.listName)}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: var(--primary); font-size: 0.875rem;">৳${(item.price || 0).toFixed(2)}</div>
+                                <div style="font-size: 0.7rem; color: ${item.purchased ? 'var(--success)' : 'var(--text-dim)'}; font-weight: 500;">
+                                    ${item.purchased ? '✓ Purchased' : 'Pending'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+        }
+
         function formatMonth(monthStr) {
             if (!monthStr) return '';
             const parts = monthStr.split('-');
@@ -1292,12 +1787,6 @@
             const month = parseInt(parts[1], 10);
             const date = new Date(year, month - 1);
             return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        }
-
-        function changeMonth(newMonth) {
-            currentMonth = newMonth;
-            currentPage = 1;
-            loadLists(newMonth, 1);
         }
 
         function changePage(delta) {
