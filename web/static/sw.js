@@ -1,5 +1,5 @@
 // Service Worker for Bazar List PWA
-const CACHE_NAME = 'bazarlist-shell-v5';
+const CACHE_NAME = 'bazarlist-shell-v6';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -37,6 +37,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event: Serve static assets from cache or network
 self.addEventListener('fetch', (event) => {
+  // Only handle http and https requests (ignore chrome-extension://, etc.)
+  if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
   // 1. Bypass Service Worker cache for API requests (Sync Engine handles data)
