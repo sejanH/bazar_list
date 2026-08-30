@@ -16,9 +16,15 @@
 <meta property="og:image"
     content="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shopping-basket.svg">
 
+<!-- PWA Metadata -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BazarList">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
+
 <!-- Favicon -->
-<link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +33,9 @@
 <script src="https://unpkg.com/lucide@latest"></script>
 <!-- Image Generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- PWA Offline DB & Sync Engine -->
+<script src="/js/db.js"></script>
+<script src="/js/sync.js"></script>
 <style>
     :root {
         --primary: #4f46e5;
@@ -219,7 +228,98 @@
     .header-user {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
+    }
+
+    /* PWA Network Status & Install Styles */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .status-online {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .status-offline {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .status-pending {
+        background: #fffbeb;
+        color: #d97706;
+        border: 1px solid #fde68a;
+    }
+
+    .status-syncing {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .dot-online { background-color: #10b981; }
+    .dot-offline { background-color: #ef4444; }
+    .dot-pending { background-color: #f59e0b; }
+    .dot-syncing {
+        background-color: #3b82f6;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .pwa-install-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eef2ff;
+        color: var(--primary);
+        border: 1px solid #c7d2fe;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .pwa-install-btn:hover {
+        background: #e0e7ff;
+    }
+
+    .pending-sync-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.7rem;
+        color: #d97706;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin-left: 6px;
     }
 
     .user-name {
@@ -647,6 +747,14 @@
                     Bazar List
                 </div>
                 <div class="header-user">
+                    <button id="pwaInstallBtn" class="pwa-install-btn hidden" onclick="installPWA()" title="Install app on your device">
+                        <i data-lucide="download" size="14"></i>
+                        <span>Install</span>
+                    </button>
+                    <div id="networkStatusPill" class="status-pill status-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Tap to sync with server">
+                        <span class="status-dot dot-online"></span>
+                        <span>Online</span>
+                    </div>
                     <span id="usernameDisplay" class="user-name">User</span>
                 </div>
             </header>
@@ -725,7 +833,6 @@
                         style="background: var(--primary); color: white;">
                         <i data-lucide="share-2" size="18"></i>
                     </button>
-                    <!-- Logout moved to bottom nav -->
                 </div>
             </header>
 
@@ -804,12 +911,51 @@
         let token = localStorage.getItem('token');
         let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         let currentListId = null;
+        let currentListCache = null;
+        let editingItemId = null;
 
         // Grouping & Pagination State
         let currentMonth = '';
         let currentPage = 1;
         let currentLimit = 10;
         let totalPages = 1;
+
+        // PWA Installation state
+        let deferredPrompt = null;
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✅ PWA Service Worker registered:', reg.scope))
+                    .catch(err => console.warn('PWA Service Worker registration failed:', err));
+            });
+        }
+
+        // PWA Install prompt listener
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) installBtn.classList.add('hidden');
+        });
+
+        async function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                deferredPrompt = null;
+                const installBtn = document.getElementById('pwaInstallBtn');
+                if (installBtn) installBtn.classList.add('hidden');
+            }
+        }
 
         // API wrapper with auth and 401 handling
         async function apiFetch(endpoint, options = {}) {
@@ -833,13 +979,24 @@
 
                 return response;
             } catch (error) {
-                console.error('API request failed:', error);
+                console.warn('API fetch offline/error:', error);
                 throw error;
             }
         }
 
         // Check authentication on load
         document.addEventListener('DOMContentLoaded', () => {
+            if (window.syncEngine) {
+                window.syncEngine.init();
+                window.syncEngine.onSyncComplete(() => {
+                    if (currentListId) {
+                        loadListDetails(currentListId);
+                    } else if (token) {
+                        loadLists();
+                    }
+                });
+            }
+
             if (token) {
                 showListsPage();
             } else {
@@ -868,11 +1025,12 @@
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     showListsPage();
+                    if (window.syncEngine) window.syncEngine.sync();
                 } else {
                     showError(data.error || 'Login failed');
                 }
             } catch (error) {
-                showError('Network error');
+                showError('Network error. Check connection.');
             }
         }
 
@@ -897,11 +1055,12 @@
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     showListsPage();
+                    if (window.syncEngine) window.syncEngine.sync();
                 } else {
                     showError(data.error || 'Registration failed');
                 }
             } catch (error) {
-                showError('Network error');
+                showError('Network error. Check connection.');
             }
         }
 
@@ -957,7 +1116,7 @@
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('listsPage').classList.remove('hidden');
             document.getElementById('listPage').classList.add('hidden');
-            document.getElementById('addListBtn').classList.add('hidden'); // Hide FAB on summary
+            document.getElementById('addListBtn').classList.add('hidden');
             document.getElementById('addItemBtn').classList.add('hidden');
             document.getElementById('bottomNav').classList.remove('hidden');
 
@@ -976,7 +1135,7 @@
             document.getElementById('listPage').classList.remove('hidden');
             document.getElementById('addListBtn').classList.add('hidden');
             document.getElementById('addItemBtn').classList.remove('hidden');
-            document.getElementById('bottomNav').classList.add('hidden'); // Hide on detail page
+            document.getElementById('bottomNav').classList.add('hidden');
             loadListDetails(listId);
             lucide.createIcons();
         }
@@ -997,33 +1156,71 @@
         function goBack() {
             showListsPage();
             currentListId = null;
+            currentListCache = null;
         }
 
-        // API Functions
+        // --- Data Loading & Offline-First Handlers ---
+
         async function loadLists(month = currentMonth, page = currentPage) {
             const container = document.getElementById('listsContainer');
-            container.innerHTML = '<div class="loading">Loading</div>';
 
+            // 1. Instant render from IndexedDB cache
             try {
-                let url = `${API_BASE}/lists?page=${page}&limit=${currentLimit}`;
-                if (month) url += `&month=${month}`;
+                const cachedLists = await window.appDB.getListsByMonth(month, currentUser.id);
+                const cachedMonths = await window.appDB.getMeta('available_months_' + currentUser.id) || [];
+                
+                if (cachedLists && cachedLists.length > 0) {
+                    const totalMonthAmount = cachedLists.reduce((sum, l) => {
+                        const listTotal = (l.items || []).reduce((itemSum, item) => itemSum + (item.price || 0), 0);
+                        return sum + listTotal;
+                    }, 0);
 
-                const response = await apiFetch(url);
-                if (!response) return;
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentMonth = data.month;
-                    currentPage = data.pagination ? data.pagination.current_page : 1;
-                    totalPages = data.pagination ? data.pagination.total_pages : 1;
-                    displayLists(data);
-                } else {
-                    container.innerHTML = `<div class="error">${data.error || 'Failed to load lists'}</div>`;
+                    displayLists({
+                        month: month || cachedLists[0].month,
+                        lists: cachedLists,
+                        available_months: cachedMonths.length > 0 ? cachedMonths : [cachedLists[0].month],
+                        total_amount: totalMonthAmount,
+                        pagination: {
+                            current_page: page,
+                            total_pages: Math.max(1, Math.ceil(cachedLists.length / currentLimit)),
+                            total_items: cachedLists.length,
+                            limit: currentLimit
+                        }
+                    });
+                } else if (!container.hasChildNodes() || container.innerHTML === '') {
+                    container.innerHTML = '<div class="loading">Loading</div>';
                 }
-            } catch (error) {
-                container.innerHTML = `<div class="error">Failed to load lists: ${error.message}</div>`;
-                console.error('Error loading lists:', error);
+            } catch (err) {
+                console.warn('IndexedDB read failed:', err);
+            }
+
+            // 2. Fetch fresh data from API if online
+            if (navigator.onLine && token) {
+                try {
+                    let url = `${API_BASE}/lists?page=${page}&limit=${currentLimit}`;
+                    if (month) url += `&month=${month}`;
+
+                    const response = await apiFetch(url);
+                    if (!response) return;
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        currentMonth = data.month;
+                        currentPage = data.pagination ? data.pagination.current_page : 1;
+                        totalPages = data.pagination ? data.pagination.total_pages : 1;
+
+                        // Save fresh data to IndexedDB
+                        await window.appDB.saveLists(data.lists || [], data.month, currentUser.id);
+                        if (data.available_months) {
+                            await window.appDB.setMeta('available_months_' + currentUser.id, data.available_months);
+                        }
+
+                        displayLists(data);
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch latest lists from server, using offline cache.');
+                }
             }
         }
 
@@ -1039,7 +1236,7 @@
                 if (monthDisplay) monthDisplay.textContent = formatMonth(data.month);
 
                 const badge = document.getElementById('totalItemsBadge');
-                if (badge) badge.textContent = data.pagination ? data.pagination.total_items : 0;
+                if (badge) badge.textContent = data.pagination ? data.pagination.total_items : lists.length;
 
                 const monthTotalAmount = document.getElementById('monthTotalAmount');
                 if (monthTotalAmount) {
@@ -1085,19 +1282,26 @@
 
                 container.innerHTML = lists.map(list => {
                     const listDate = new Date(list.date);
-                    const dateStr = listDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    const dateStr = !isNaN(listDate.getTime()) 
+                        ? listDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : list.date;
+
+                    const isTemp = typeof list.id === 'string' && list.id.startsWith('temp_');
 
                     return `
-                    <div class="list-card" onclick="showListPage(${list.id})">
+                    <div class="list-card" onclick="showListPage('${list.id}')">
                         <div class="list-card-content">
-                            <div class="list-title">${escapeHtml(list.name || 'Shopping List')}</div>
+                            <div class="list-title">
+                                ${escapeHtml(list.name || 'Shopping List')}
+                                ${isTemp ? '<span class="pending-sync-badge">⏳ Pending</span>' : ''}
+                            </div>
                             <div class="list-info">
                                 <span><i data-lucide="calendar" size="12" style="display:inline; vertical-align:middle; margin-right:4px"></i>${dateStr}</span>
                                 <span><i data-lucide="package" size="12" style="display:inline; vertical-align:middle; margin-right:4px"></i>${list.items ? list.items.length : 0} items</span>
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button class="icon-btn" onclick="event.stopPropagation(); deleteList(${list.id})">
+                            <button class="icon-btn" onclick="event.stopPropagation(); deleteList('${list.id}')" title="Delete List">
                                 <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
@@ -1106,13 +1310,15 @@
                 lucide.createIcons();
             } catch (err) {
                 console.error('Error in displayLists:', err);
-                throw err;
             }
         }
 
         function formatMonth(monthStr) {
             if (!monthStr) return '';
-            const [year, month] = monthStr.split('-');
+            const parts = monthStr.split('-');
+            if (parts.length < 2) return monthStr;
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
             const date = new Date(year, month - 1);
             return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
@@ -1133,25 +1339,48 @@
 
         async function loadListDetails(listId) {
             const container = document.getElementById('itemsContainer');
-            container.innerHTML = '<div class="loading">Loading</div>';
 
+            // 1. Instant render from IndexedDB
             try {
-                const response = await apiFetch(`${API_BASE}/lists/${listId}`);
-                if (!response) return;
+                const cachedList = await window.appDB.getList(listId);
+                if (cachedList) {
+                    currentListCache = cachedList;
+                    const listDate = new Date(cachedList.date);
+                    const dateStr = !isNaN(listDate.getTime()) 
+                        ? listDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        : cachedList.date;
+                    document.getElementById('listTitle').textContent = cachedList.name ? `${cachedList.name} (${dateStr})` : dateStr;
+                    displayItems(cachedList.items || []);
+                } else if (!container.hasChildNodes() || container.innerHTML === '') {
+                    container.innerHTML = '<div class="loading">Loading</div>';
+                }
+            } catch (err) {
+                console.warn('IndexedDB read list error:', err);
+            }
 
-                const list = await response.json();
-                currentListCache = list;
+            // 2. Fetch fresh list from API if online and list is numeric
+            if (navigator.onLine && token && !(typeof listId === 'string' && listId.startsWith('temp_'))) {
+                try {
+                    const response = await apiFetch(`${API_BASE}/lists/${listId}`);
+                    if (response && response.ok) {
+                        const list = await response.json();
+                        currentListCache = list;
+                        await window.appDB.saveList(list);
 
-                const listDate = new Date(list.date);
-                const dateStr = listDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                document.getElementById('listTitle').textContent = list.name ? `${list.name} (${dateStr})` : dateStr;
-                displayItems(list.items);
-            } catch (error) {
-                container.innerHTML = '<div class="error">Failed to load items</div>';
+                        const listDate = new Date(list.date);
+                        const dateStr = !isNaN(listDate.getTime()) 
+                            ? listDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : list.date;
+                        document.getElementById('listTitle').textContent = list.name ? `${list.name} (${dateStr})` : dateStr;
+                        displayItems(list.items || []);
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch list details from server, using local data.');
+                }
             }
         }
 
-        function displayItems(items) {
+        function displayItems(items = []) {
             const container = document.getElementById('itemsContainer');
             const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
@@ -1167,23 +1396,28 @@
                 return;
             }
 
-            container.innerHTML = items.map(item => `
-                <div class="item-row ${item.purchased ? 'purchased' : ''}" onclick="togglePurchased(${item.id})">
+            container.innerHTML = items.map(item => {
+                const isTemp = typeof item.id === 'string' && item.id.startsWith('temp_');
+                return `
+                <div class="item-row ${item.purchased ? 'purchased' : ''}" onclick="togglePurchased('${item.id}')">
                     <div class="check-box ${item.purchased ? 'checked' : ''}">
                         ${item.purchased ? '<i data-lucide="check" size="14"></i>' : ''}
                     </div>
-                    <div class="item-label">${escapeHtml(item.name)}</div>
+                    <div class="item-label">
+                        ${escapeHtml(item.name)}
+                        ${isTemp ? '<span class="pending-sync-badge">⏳</span>' : ''}
+                    </div>
                     <div class="item-val">৳${(item.price || 0).toFixed(2)}</div>
                     <div class="item-actions-row">
-                        <button class="icon-btn" style="color:var(--text-dim)" onclick="event.stopPropagation(); editItem(${item.id})">
+                        <button class="icon-btn" style="color:var(--text-dim)" onclick="event.stopPropagation(); editItem('${item.id}')" title="Edit Item">
                             <i data-lucide="edit-3" size="16"></i>
                         </button>
-                        <button class="icon-btn" onclick="event.stopPropagation(); deleteItem(${item.id})">
+                        <button class="icon-btn" onclick="event.stopPropagation(); deleteItem('${item.id}')" title="Delete Item">
                             <i data-lucide="trash-2" size="16"></i>
                         </button>
                     </div>
                 </div>
-            `).join('') + `
+            `}).join('') + `
                 <div class="total-section">
                     <div class="total-label-group">
                         <div class="total-label">Total</div>
@@ -1196,75 +1430,69 @@
         }
 
         async function createList() {
-            const name = document.getElementById('listName').value;
-            const date = document.getElementById('listDate').value;
+            const nameInput = document.getElementById('listName');
+            const dateInput = document.getElementById('listDate');
+            const name = nameInput.value.trim();
+            const date = dateInput.value || new Date().toISOString().split('T')[0];
 
-            try {
-                const response = await apiFetch(`${API_BASE}/lists`, {
-                    method: 'POST',
-                    body: JSON.stringify({ name, date })
-                });
+            if (!name) {
+                alert('List name is required');
+                return;
+            }
 
-                if (!response) return;
+            const tempId = 'temp_list_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            const newList = {
+                id: tempId,
+                user_id: currentUser.id,
+                name: name,
+                date: date,
+                items: [],
+                _is_local_only: true
+            };
 
-                if (response.ok) {
-                    closeModals();
-                    loadLists();
-                } else {
-                    alert('Failed to create list');
-                }
-            } catch (error) {
-                alert('Network error');
+            // 1. Save locally and update UI instantly
+            await window.appDB.saveList(newList);
+            await window.appDB.queueOutbox('CREATE_LIST', { name, date }, tempId);
+            closeModals();
+            loadLists();
+
+            // 2. Trigger sync in background
+            if (window.syncEngine) {
+                window.syncEngine.updateStatusUI();
+                window.syncEngine.sync();
             }
         }
 
         async function deleteList(listId) {
             if (!confirm('Delete this shopping list?')) return;
 
-            try {
-                const response = await apiFetch(`${API_BASE}/lists/${listId}`, {
-                    method: 'DELETE'
-                });
+            // 1. Remove from local store and update UI instantly
+            await window.appDB.deleteList(listId);
 
-                if (!response) return;
-
-                if (response.ok) {
-                    loadLists();
+            if (typeof listId === 'string' && listId.startsWith('temp_')) {
+                // If it was only local, clean outbox entries
+                const items = await window.appDB.getOutboxItems();
+                for (const item of items) {
+                    if (item.temp_id === listId || item.target_list_id === listId) {
+                        await window.appDB.deleteOutboxItem(item.id);
+                    }
                 }
-            } catch (error) {
-                alert('Failed to delete list');
+            } else {
+                await window.appDB.queueOutbox('DELETE_LIST', {}, null, listId);
             }
-        }
 
-        let editingItemId = null;
-        let currentListCache = null;
+            loadLists();
 
-        async function addItem() {
-            const name = document.getElementById('itemName').value;
-            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-
-            try {
-                const response = await apiFetch(`${API_BASE}/lists/${currentListId}/items`, {
-                    method: 'POST',
-                    body: JSON.stringify({ name, price, purchased: false })
-                });
-
-                if (!response) return;
-
-                if (response.ok) {
-                    closeModals();
-                    loadListDetails(currentListId);
-                } else {
-                    alert('Failed to add item');
-                }
-            } catch (error) {
-                alert('Network error');
+            // 2. Trigger sync
+            if (window.syncEngine) {
+                window.syncEngine.updateStatusUI();
+                window.syncEngine.sync();
             }
         }
 
         function editItem(itemId) {
-            if (!currentListCache) return;
-            const item = currentListCache.items.find(i => i.id === itemId);
+            if (!currentListCache || !currentListCache.items) return;
+            const item = currentListCache.items.find(i => String(i.id) === String(itemId));
             if (!item) return;
 
             editingItemId = itemId;
@@ -1277,88 +1505,123 @@
         }
 
         async function saveItem() {
-            const name = document.getElementById('itemName').value;
+            const name = document.getElementById('itemName').value.trim();
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
 
-            if (!name.trim()) {
+            if (!name) {
                 alert('Item name is required');
                 return;
             }
 
-            try {
-                let response;
-                if (editingItemId) {
-                    // Update existing item
-                    const item = await getItem(editingItemId);
+            if (!currentListCache) return;
+            if (!currentListCache.items) currentListCache.items = [];
+
+            if (editingItemId) {
+                // Edit existing item
+                const item = currentListCache.items.find(i => String(i.id) === String(editingItemId));
+                if (item) {
                     item.name = name;
                     item.price = price;
 
-                    response = await apiFetch(`${API_BASE}/lists/${currentListId}/items/${editingItemId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(item)
-                    });
-                } else {
-                    // Add new item
-                    response = await apiFetch(`${API_BASE}/lists/${currentListId}/items`, {
-                        method: 'POST',
-                        body: JSON.stringify({ name, price, purchased: false })
-                    });
-                }
+                    await window.appDB.saveList(currentListCache);
+                    displayItems(currentListCache.items);
 
-                if (!response) return;
-
-                if (response.ok) {
-                    closeModals();
-                    loadListDetails(currentListId);
-                } else {
-                    alert(editingItemId ? 'Failed to update item' : 'Failed to add item');
+                    if (typeof editingItemId === 'string' && editingItemId.startsWith('temp_')) {
+                        // Update pending creation in outbox
+                        const items = await window.appDB.getOutboxItems();
+                        for (const outboxItem of items) {
+                            if (outboxItem.temp_id === editingItemId) {
+                                outboxItem.payload.name = name;
+                                outboxItem.payload.price = price;
+                            }
+                        }
+                    } else {
+                        await window.appDB.queueOutbox('UPDATE_ITEM', { name, price, purchased: item.purchased }, null, currentListId, editingItemId);
+                    }
                 }
-            } catch (error) {
-                alert('Network error');
+            } else {
+                // Add new item
+                const tempItemId = 'temp_item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                const newItem = {
+                    id: tempItemId,
+                    list_id: currentListId,
+                    name: name,
+                    price: price,
+                    purchased: false,
+                    _is_local_only: true
+                };
+
+                currentListCache.items.push(newItem);
+                await window.appDB.saveList(currentListCache);
+                displayItems(currentListCache.items);
+
+                await window.appDB.queueOutbox('CREATE_ITEM', { name, price, purchased: false }, tempItemId, currentListId);
+            }
+
+            closeModals();
+
+            // Trigger sync
+            if (window.syncEngine) {
+                window.syncEngine.updateStatusUI();
+                window.syncEngine.sync();
             }
         }
 
         async function togglePurchased(itemId) {
-            const item = await getItem(itemId);
+            if (!currentListCache || !currentListCache.items) return;
+            const item = currentListCache.items.find(i => String(i.id) === String(itemId));
+            if (!item) return;
+
             item.purchased = !item.purchased;
 
-            try {
-                const response = await apiFetch(`${API_BASE}/lists/${currentListId}/items/${itemId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(item)
-                });
+            // 1. Update UI and DB instantly
+            await window.appDB.saveList(currentListCache);
+            displayItems(currentListCache.items);
 
-                if (!response) return;
-
-                if (response.ok) {
-                    loadListDetails(currentListId);
+            // 2. Queue mutation
+            if (typeof itemId === 'string' && itemId.startsWith('temp_')) {
+                const items = await window.appDB.getOutboxItems();
+                for (const outboxItem of items) {
+                    if (outboxItem.temp_id === itemId) {
+                        outboxItem.payload.purchased = item.purchased;
+                    }
                 }
-            } catch (error) {
-                alert('Failed to update item');
+            } else {
+                await window.appDB.queueOutbox('UPDATE_ITEM', { name: item.name, price: item.price, purchased: item.purchased }, null, currentListId, itemId);
+            }
+
+            // 3. Trigger sync
+            if (window.syncEngine) {
+                window.syncEngine.updateStatusUI();
+                window.syncEngine.sync();
             }
         }
 
         async function deleteItem(itemId) {
-            try {
-                const response = await apiFetch(`${API_BASE}/lists/${currentListId}/items/${itemId}`, {
-                    method: 'DELETE'
-                });
+            if (!currentListCache || !currentListCache.items) return;
 
-                if (!response) return;
+            // 1. Remove from local memory and DB instantly
+            currentListCache.items = currentListCache.items.filter(i => String(i.id) !== String(itemId));
+            await window.appDB.saveList(currentListCache);
+            displayItems(currentListCache.items);
 
-                if (response.ok) {
-                    loadListDetails(currentListId);
+            // 2. Queue mutation
+            if (typeof itemId === 'string' && itemId.startsWith('temp_')) {
+                const items = await window.appDB.getOutboxItems();
+                for (const outboxItem of items) {
+                    if (outboxItem.temp_id === itemId) {
+                        await window.appDB.deleteOutboxItem(outboxItem.id);
+                    }
                 }
-            } catch (error) {
-                alert('Failed to delete item');
+            } else {
+                await window.appDB.queueOutbox('DELETE_ITEM', {}, null, currentListId, itemId);
             }
-        }
 
-        async function getItem(itemId) {
-            const response = await apiFetch(`${API_BASE}/lists/${currentListId}`);
-            if (!response || !response.ok) return null;
-            const list = await response.json();
-            return list.items.find(i => i.id === itemId);
+            // 3. Trigger sync
+            if (window.syncEngine) {
+                window.syncEngine.updateStatusUI();
+                window.syncEngine.sync();
+            }
         }
 
         // UI Helpers
@@ -1392,14 +1655,9 @@
             errorDiv.classList.remove('hidden');
         }
 
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = text || '';
             return div.innerHTML;
         }
 
@@ -1423,8 +1681,11 @@
             invoice.style.fontFamily = "'Inter', sans-serif";
 
             const listDate = new Date(currentListCache.date);
-            const dateStr = listDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            const total = currentListCache.items.reduce((sum, item) => sum + (item.price || 0), 0);
+            const dateStr = !isNaN(listDate.getTime()) 
+                ? listDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                : currentListCache.date;
+            const items = currentListCache.items || [];
+            const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
             invoice.innerHTML = `
                 <div style="text-align: center; margin-bottom: 30px;">
@@ -1448,7 +1709,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${currentListCache.items.map(item => `
+                        ${items.map(item => `
                             <tr style="border-bottom: 1px solid #f9fafb;">
                                 <td style="padding: 12px 0; font-size: 14px;">
                                     ${item.purchased ? '<span style="color: #10b981;">✓</span> ' : ''}${escapeHtml(item.name)}
@@ -1473,7 +1734,7 @@
 
             try {
                 const canvas = await html2canvas(invoice, {
-                    scale: 2, // Better resolution
+                    scale: 2,
                     useCORS: true,
                     logging: false
                 });

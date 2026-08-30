@@ -62,6 +62,20 @@ func main() {
 	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.UpdateItem).Methods("PUT", "PATCH")
 	apiRouter.HandleFunc("/lists/{id}/items/{itemId}", listHandler.DeleteItem).Methods("DELETE")
 
+	// Serve Service Worker with no-cache headers
+	router.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		http.ServeFile(w, r, "./web/static/sw.js")
+	}).Methods("GET")
+
+	// Serve Web App Manifest with no-cache headers
+	router.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/manifest+json")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		http.ServeFile(w, r, "./web/static/manifest.json")
+	}).Methods("GET")
+
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/static/")))
 
