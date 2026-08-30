@@ -1061,6 +1061,89 @@
         background: #fee2e2;
     }
 
+    /* Activity Log Timeline */
+    .activity-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .activity-row:hover {
+        background: #f1f5f9;
+    }
+
+    .activity-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .activity-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .activity-user {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .activity-time {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .activity-action {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 1px;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .activity-highlight {
+        animation: activity-pulse 2s ease-out;
+    }
+
+    @keyframes activity-pulse {
+        0% {
+            background-color: #ecfdf5;
+            border-color: #a7f3d0;
+            transform: scale(1.02);
+        }
+        50% {
+            background-color: #d1fae5;
+            border-color: #6ee7b7;
+        }
+        100% {
+            background-color: #f8fafc;
+            border-color: #f1f5f9;
+            transform: scale(1);
+        }
+    }
+
     /* Toast Notification */
     .toast-notification {
         position: fixed;
@@ -1303,8 +1386,27 @@
                 </div>
             </header>
 
-            <div id="itemsContainer" class="lists-container">
-                <!-- Items will be rendered here -->
+            <div class="lists-container" style="flex: 1; overflow-y: auto;">
+                <div id="itemsContainer">
+                    <!-- Items will be rendered here -->
+                </div>
+
+                <!-- Activity Log Section -->
+                <div class="summary-section-card" style="margin-top: 16px;">
+                    <div class="summary-section-header" style="cursor: pointer;" onclick="toggleActivityLog()">
+                        <div class="summary-section-title">
+                            <i data-lucide="history" class="text-primary" size="18"></i>
+                            Activity History
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="activityCountBadge" class="filter-count-badge" style="font-size: 0.7rem; padding: 1px 6px;">0</span>
+                            <i id="activityChevron" data-lucide="chevron-down" size="16"></i>
+                        </div>
+                    </div>
+                    <div id="activityLogList" class="hidden" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-height: 240px; overflow-y: auto;">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
             </div>
 
             <button id="addItemBtn" class="fab" onclick="showAddItemModal()">
@@ -1620,6 +1722,7 @@
         }
 
         function logout() {
+            if (window.liveClient) window.liveClient.disconnect();
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             token = null;
@@ -1641,6 +1744,7 @@
         }
 
         function showLoginPage() {
+            if (window.liveClient) window.liveClient.disconnect();
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('listsPage').classList.add('hidden');
             document.getElementById('listPage').classList.add('hidden');
@@ -1650,6 +1754,7 @@
         }
 
         function showListsPage() {
+            if (window.liveClient) window.liveClient.disconnect();
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('listsPage').classList.remove('hidden');
             document.getElementById('listPage').classList.add('hidden');
@@ -1668,6 +1773,7 @@
         }
 
         function showSummaryPage() {
+            if (window.liveClient) window.liveClient.disconnect();
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('listsPage').classList.remove('hidden');
             document.getElementById('listPage').classList.add('hidden');
@@ -1695,6 +1801,10 @@
             document.getElementById('bottomNav').classList.add('hidden');
             loadListDetails(listId);
             loadMembers(listId);
+            loadActivities(listId);
+            if (window.liveClient) {
+                window.liveClient.connect(listId);
+            }
             lucide.createIcons();
         }
 
@@ -1712,11 +1822,14 @@
         }
 
         function goBack() {
+            if (window.liveClient) window.liveClient.disconnect();
             showListsPage();
             currentListId = null;
             currentListCache = null;
             const badge = document.getElementById('memberCountBadge');
             if (badge) badge.textContent = '1';
+            const actBadge = document.getElementById('activityCountBadge');
+            if (actBadge) actBadge.textContent = '0';
         }
 
         // --- Month Filter Helpers ---
@@ -2200,7 +2313,7 @@
             container.innerHTML = items.map(item => {
                 const isTemp = typeof item.id === 'string' && item.id.startsWith('temp_');
                 return `
-                <div class="item-row ${item.purchased ? 'purchased' : ''}" onclick="togglePurchased('${item.id}')">
+                <div class="item-row ${item.purchased ? 'purchased' : ''}" data-item-id="${item.id}" onclick="togglePurchased('${item.id}')">
                     <div class="check-box ${item.purchased ? 'checked' : ''}">
                         ${item.purchased ? '<i data-lucide="check" size="14"></i>' : ''}
                     </div>
@@ -2664,7 +2777,267 @@
             }, duration);
         }
 
+        // --- Activity History Timeline Helpers ---
+
+        function toggleActivityLog() {
+            const listEl = document.getElementById('activityLogList');
+            const chevron = document.getElementById('activityChevron');
+            if (!listEl) return;
+
+            const isHidden = listEl.classList.contains('hidden');
+            if (isHidden) {
+                listEl.classList.remove('hidden');
+                if (chevron) chevron.setAttribute('data-lucide', 'chevron-up');
+            } else {
+                listEl.classList.add('hidden');
+                if (chevron) chevron.setAttribute('data-lucide', 'chevron-down');
+            }
+            lucide.createIcons();
+        }
+
+        function formatActivityTime(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            if (diffSec < 45) return 'just now';
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m ago`;
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return `${diffHour}h ago`;
+            const diffDay = Math.floor(diffHour / 24);
+            if (diffDay === 1) return 'yesterday';
+            if (diffDay < 7) return `${diffDay}d ago`;
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function renderActivityItem(activity) {
+            const timeAgo = formatActivityTime(activity.created_at || activity.CreatedAt || new Date());
+            const userName = escapeHtml(activity.user_name || activity.UserName || 'Someone');
+            const isMe = currentUser && (activity.user_id === currentUser.id || activity.UserID === currentUser.id);
+            const displayName = isMe ? `${userName} (You)` : userName;
+            const action = (activity.action || activity.Action || '').toLowerCase();
+            const details = escapeHtml(activity.details || activity.Details || activity.item_name || activity.ItemName || '');
+
+            let iconName = 'activity';
+            let iconColor = '#4f46e5';
+            let iconBg = '#eef2ff';
+
+            if (action.includes('purchased')) {
+                iconName = 'check-circle-2';
+                iconColor = '#059669';
+                iconBg = '#d1fae5';
+            } else if (action.includes('added') || action.includes('create')) {
+                iconName = 'plus-circle';
+                iconColor = '#10b981';
+                iconBg = '#ecfdf5';
+            } else if (action.includes('delete') || action.includes('remove')) {
+                iconName = 'trash-2';
+                iconColor = '#ef4444';
+                iconBg = '#fef2f2';
+            } else if (action.includes('update') || action.includes('edit')) {
+                iconName = 'edit-2';
+                iconColor = '#3b82f6';
+                iconBg = '#eff6ff';
+            } else if (action.includes('member')) {
+                iconName = 'users';
+                iconColor = '#8b5cf6';
+                iconBg = '#f5f3ff';
+            }
+
+            return `
+                <div class="activity-row" data-activity-id="${activity.id || ''}">
+                    <div class="activity-icon" style="background: ${iconBg}; color: ${iconColor};">
+                        <i data-lucide="${iconName}" size="14"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <span class="activity-user">${displayName}</span>
+                            <span class="activity-time">${timeAgo}</span>
+                        </div>
+                        <div class="activity-action">${details}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadActivities(listId) {
+            const listEl = document.getElementById('activityLogList');
+            const badge = document.getElementById('activityCountBadge');
+
+            if (!listId || (typeof listId === 'string' && listId.startsWith('temp_'))) {
+                if (listEl) listEl.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 12px;">No activity recorded yet</div>';
+                if (badge) badge.textContent = '0';
+                return;
+            }
+
+            try {
+                const response = await apiFetch(`${API_BASE}/lists/${listId}/activities`);
+                if (!response || !response.ok) return;
+
+                const activities = await response.json();
+                if (badge) {
+                    badge.textContent = activities ? activities.length : 0;
+                }
+
+                if (!listEl) return;
+
+                if (!activities || activities.length === 0) {
+                    listEl.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; padding: 12px;">No activity recorded yet</div>';
+                } else {
+                    listEl.innerHTML = activities.map(act => renderActivityItem(act)).join('');
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                console.warn('Failed to load activities:', err);
+            }
+        }
+
+        function prependActivityLog(activity) {
+            const listEl = document.getElementById('activityLogList');
+            const badge = document.getElementById('activityCountBadge');
+            if (!listEl) return;
+
+            // Clear empty placeholder if present
+            if (listEl.children.length === 1 && !listEl.children[0].classList.contains('activity-row')) {
+                listEl.innerHTML = '';
+            }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = renderActivityItem(activity).trim();
+            const newRow = tempDiv.firstElementChild;
+            if (newRow) {
+                newRow.classList.add('activity-highlight');
+                listEl.insertBefore(newRow, listEl.firstChild);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    newRow.classList.remove('activity-highlight');
+                }, 2000);
+            }
+
+            if (badge) {
+                const currentCount = parseInt(badge.textContent, 10) || 0;
+                badge.textContent = currentCount + 1;
+            }
+        }
+
+        // --- Real-Time Live Sync Handlers ---
+
         if (window.liveClient) {
+            window.liveClient.on('item_created', (item) => {
+                if (!currentListId || String(item.list_id) !== String(currentListId)) return;
+
+                if (!currentListCache) {
+                    currentListCache = { id: currentListId, items: [] };
+                }
+                if (!currentListCache.items) {
+                    currentListCache.items = [];
+                }
+
+                const exists = currentListCache.items.some(i => String(i.id) === String(item.id));
+                if (!exists) {
+                    currentListCache.items.push(item);
+                    window.appDB.saveList(currentListCache);
+                    displayItems(currentListCache.items);
+
+                    const creator = item.creatorName || item.creator_name || item.user_name || 'Someone';
+                    showToast(`${creator} added "${item.name}"`);
+                }
+            });
+
+            window.liveClient.on('item_updated', (updatedItem) => {
+                if (!currentListId || String(updatedItem.list_id) !== String(currentListId)) return;
+
+                if (currentListCache && currentListCache.items) {
+                    const idx = currentListCache.items.findIndex(i => String(i.id) === String(updatedItem.id));
+                    if (idx !== -1) {
+                        currentListCache.items[idx] = { ...currentListCache.items[idx], ...updatedItem };
+                        window.appDB.saveList(currentListCache);
+                    }
+                }
+
+                const itemEl = document.querySelector(`[data-item-id="${updatedItem.id}"]`);
+                if (itemEl) {
+                    const checkBox = itemEl.querySelector('.check-box');
+                    if (checkBox) {
+                        if (updatedItem.purchased) {
+                            checkBox.classList.add('checked');
+                            checkBox.innerHTML = '<i data-lucide="check" size="14"></i>';
+                        } else {
+                            checkBox.classList.remove('checked');
+                            checkBox.innerHTML = '';
+                        }
+                    }
+                    if (updatedItem.purchased) {
+                        itemEl.classList.add('purchased');
+                    } else {
+                        itemEl.classList.remove('purchased');
+                    }
+                    const labelEl = itemEl.querySelector('.item-label');
+                    if (labelEl) labelEl.textContent = updatedItem.name;
+                    const valEl = itemEl.querySelector('.item-val');
+                    if (valEl) valEl.textContent = `৳${(updatedItem.price || 0).toFixed(2)}`;
+
+                    if (currentListCache && currentListCache.items) {
+                        const total = currentListCache.items.reduce((sum, i) => sum + (i.price || 0), 0);
+                        const totalSection = document.querySelector('.total-section');
+                        if (totalSection) {
+                            const totalAmtEl = totalSection.querySelector('.total-amount');
+                            if (totalAmtEl) totalAmtEl.textContent = `৳${total.toFixed(2)}`;
+                            const totalCountEl = totalSection.querySelector('.total-count');
+                            if (totalCountEl) totalCountEl.textContent = `${currentListCache.items.length} items`;
+                        }
+                    }
+                    lucide.createIcons();
+                } else if (currentListCache && currentListCache.items) {
+                    displayItems(currentListCache.items);
+                }
+
+                showToast(`"${updatedItem.name}" updated`);
+            });
+
+            window.liveClient.on('item_deleted', (data) => {
+                const deletedId = data.item_id || data.id;
+                if (!deletedId) return;
+
+                if (currentListCache && currentListCache.items) {
+                    currentListCache.items = currentListCache.items.filter(i => String(i.id) !== String(deletedId));
+                    window.appDB.saveList(currentListCache);
+                }
+
+                const itemEl = document.querySelector(`[data-item-id="${deletedId}"]`);
+                if (itemEl) {
+                    itemEl.style.transition = 'all 0.3s ease';
+                    itemEl.style.opacity = '0';
+                    itemEl.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        if (itemEl.parentElement) itemEl.remove();
+                        if (currentListCache && currentListCache.items.length === 0) {
+                            displayItems([]);
+                        } else if (currentListCache && currentListCache.items) {
+                            const total = currentListCache.items.reduce((sum, i) => sum + (i.price || 0), 0);
+                            const totalSection = document.querySelector('.total-section');
+                            if (totalSection) {
+                                const totalAmtEl = totalSection.querySelector('.total-amount');
+                                if (totalAmtEl) totalAmtEl.textContent = `৳${total.toFixed(2)}`;
+                                const totalCountEl = totalSection.querySelector('.total-count');
+                                if (totalCountEl) totalCountEl.textContent = `${currentListCache.items.length} items`;
+                            }
+                        }
+                    }, 300);
+                } else if (currentListCache && currentListCache.items) {
+                    displayItems(currentListCache.items);
+                }
+            });
+
+            window.liveClient.on('activity_logged', (activity) => {
+                if (!currentListId || String(activity.list_id) !== String(currentListId)) return;
+                prependActivityLog(activity);
+            });
+
             window.liveClient.on('member_updated', () => {
                 if (currentListId) {
                     loadMembers(currentListId);
