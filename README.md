@@ -1,275 +1,303 @@
-# Bazar List - Personal Shopping List Manager
+# 🛒 Bazar List
 
-A modern Golang web application for managing your home bazar (shopping) list. Built to learn Golang fundamentals and web development.
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![Database](https://img.shields.io/badge/Database-MySQL-4479A1?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![ORM](https://img.shields.io/badge/ORM-GORM-009688?style=flat)](https://gorm.io/)
+[![JWT Auth](https://img.shields.io/badge/Auth-JWT-black?style=flat&logo=jsonwebtokens)](https://jwt.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🎉 Now Available as a Web Application!
+A modern, full-featured web application and RESTful API built in Go (Golang) for managing household shopping and grocery (*bazar*) lists. It features JWT-based user authentication, monthly list organization, budget/expense tracking, item status tracking, and a clean, responsive web interface.
 
-Bazar List has been upgraded from a CLI tool to a full-featured web application with a beautiful UI!
+---
 
-## Features
+## ✨ Features
 
-### Web Application ⭐ NEW
-- 🎨 Beautiful, modern UI with responsive design
-- 🌐 RESTful API
-- 📱 Mobile-friendly interface
-- 📊 Real-time statistics dashboard
-- 🔍 Instant search and filtering
-- ✨ Smooth animations and transitions
+- **🔐 User Authentication & Authorization**
+  - Secure user registration and login with bcrypt password hashing
+  - Stateless JWT (JSON Web Token) based session handling
+  - Multi-user isolation — each user manages their private lists
+- **📅 Monthly List Organization**
+  - Create and manage date-tagged shopping lists
+  - Automatic grouping and filtering by month (`YYYY-MM`)
+  - Built-in pagination and historical month navigation
+- **📝 Real-Time Shopping & Item Tracking**
+  - Add items with name and price tags
+  - Real-time toggle to mark items as purchased/pending
+  - Automatic calculation of total cost per list and aggregated monthly expenditure
+- **🎨 Modern Responsive Web UI**
+  - Fast Single Page Application (SPA) frontend served directly by the backend
+  - Clean desktop & mobile-friendly design
+  - Intuitive modals for adding/editing lists and items
+- **⚡ RESTful API & Modular Architecture**
+  - Robust backend built with Gorilla Mux and GORM
+  - CORS middleware support
+  - Auto-migrated MySQL schema
 
-### Core Features
-- ✅ Add items to your shopping list
-- ✅ Remove items from the list
-- ✅ Mark items as purchased
-- ✅ Categorize items (produce, dairy, meat, pantry, etc.)
-- ✅ Search and filter items
-- 💾 Persistent storage using JSON
-- 🖥️ CLI interface (still available!)
-- 🌐 Web interface (NEW!)
+---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+- **Backend:** [Go](https://go.dev/) (1.21+)
+- **Routing & Middleware:** [Gorilla Mux](https://github.com/gorilla/mux)
+- **Database & ORM:** [MySQL](https://www.mysql.com/) with [GORM](https://gorm.io/)
+- **Authentication:** [golang-jwt/jwt](https://github.com/golang-jwt/jwt) & [x/crypto/bcrypt](https://pkg.go.dev/golang.org/x/crypto/bcrypt)
+- **Frontend:** Vanilla HTML5, CSS3, JavaScript (SPA)
+
+---
+
+## 📁 Project Structure
 
 ```
-bazarlist/
-├── cmd/                 # Application entry points
-│   └── cli/            # CLI application
-├── internal/           # Private application code
-│   ├── handlers/       # CLI handlers
-│   ├── models/         # Data structures
-│   ├── service/        # Business logic
-│   ├── storage/        # Data persistence
-│   └── utils/          # Utility functions
-├── pkg/                # Public libraries
-│   ├── logger/         # Logging utilities
-│   └── validator/      # Validation utilities
-├── api/                # API definitions (for future REST API)
-├── web/                # Web assets (for future web UI)
-├── scripts/            # Build and deployment scripts
-├── test/               # Additional test files
-├── docs/               # Documentation
-├── build/              # Build output
-├── configs/            # Configuration files
-└── init/               # Initialization files
+bazar_list/
+├── cmd/
+│   └── web/                # Web application entry point (main.go)
+├── internal/               # Private application code
+│   ├── api/                # HTTP handlers, routing & middleware
+│   │   ├── auth_handlers.go
+│   │   ├── list_handlers.go
+│   │   ├── middleware.go
+│   │   └── utils.go
+│   ├── auth/               # JWT token generation & password hashing
+│   │   └── auth.go
+│   ├── models/             # Data models (User, ShoppingList, Item)
+│   │   └── database.go
+│   └── storage/            # Database layer (MySQL & GORM)
+│       └── mysql.go
+├── web/
+│   └── static/             # Frontend assets (index.html, styles, scripts)
+├── docs/                   # Detailed documentation and learning guides
+├── scripts/                # Setup and deployment helper scripts
+├── .env.example            # Example environment configuration
+├── Makefile                # Build, run, and development commands
+├── go.mod                  # Go module definition
+└── README.md
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Go 1.21 or higher
-- Git
+- [Go](https://go.dev/dl/) 1.21 or higher
+- [MySQL](https://dev.mysql.com/downloads/) 5.7+ / 8.0+ (or running via Docker)
+- [Git](https://git-scm.com/)
+- [Make](https://www.gnu.org/software/make/) (optional, for helper commands)
 
-### Installation
+---
 
-1. Clone the repository:
+### Step 1: Clone the Repository
+
 ```bash
 git clone https://github.com/sejan/bazarlist.git
 cd bazarlist
 ```
 
-2. Install dependencies:
+### Step 2: Configure MySQL Database
+
+Create a database for the application:
+
+```sql
+-- Connect to MySQL
+mysql -u root -p
+
+-- Create database and user
+CREATE DATABASE bazarlist CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'bazarlist'@'localhost' IDENTIFIED BY 'bazarlist123';
+GRANT ALL PRIVILEGES ON bazarlist.* TO 'bazarlist'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+> **Using Docker instead?**
+> ```bash
+> docker run --name bazarlist-mysql \
+>   -e MYSQL_ROOT_PASSWORD=rootpass \
+>   -e MYSQL_DATABASE=bazarlist \
+>   -e MYSQL_USER=bazarlist \
+>   -e MYSQL_PASSWORD=bazarlist123 \
+>   -p 3306:3306 -d mysql:8.0
+> ```
+
+### Step 3: Configure Environment Variables
+
+Copy `.env.example` to `.env` and adjust the values if needed:
+
 ```bash
+cp .env.example .env
+```
+
+Example `.env` file:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=bazarlist
+DB_PASSWORD=bazarlist123
+DB_NAME=bazarlist
+
+# Security & Server
+JWT_SECRET=your-super-secret-jwt-key-change-this
+PORT=8080
+```
+
+### Step 4: Run the Application
+
+```bash
+# Download dependencies
 go mod download
-```
 
-3. Build the application:
-```bash
-make build
-```
-
-## 🌐 Web Application (Recommended)
-
-### Running the Web App
-
-```bash
-# Run directly
+# Run directly via Make
 make run-web
 
-# Or build and run
-make build-web
-./build/bazarlist-web
+# Or run with Go directly
+go run cmd/web/main.go
 ```
 
-### Access the Web App
-
-Open your browser and navigate to:
+Once started, open your browser and navigate to:
 ```
 http://localhost:8080
 ```
 
-### Using the Web App
+---
 
-1. **Add Items**: Enter item name and select category
-2. **View Items**: See all items in your shopping list
-3. **Complete Items**: Click the checkbox to mark as purchased
-4. **Delete Items**: Click the delete button to remove
-5. **Search**: Use the search bar to find items
-6. **Filter**: Filter by All, Pending, or Completed
+## 📡 REST API Reference
 
-### Custom Configuration
-
-```bash
-# Set custom port
-export PORT=3000
-make run-web
-
-# Set custom data directory
-export BAZARLIST_DATA_DIR=/path/to/data
-make run-web
+All protected endpoints require an `Authorization` header with the Bearer token:
+```
+Authorization: Bearer <your_jwt_token>
 ```
 
-## 🖥️ CLI Application (Still Available!)
+### 🔐 Authentication Endpoints
 
-The CLI version is still available for those who prefer command-line tools.
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Register a new user | No |
+| `POST` | `/api/auth/login` | Log in and obtain JWT | No |
 
-### Running the CLI App
-
-```bash
-# Run directly
-make run
-
-# Or build and run
-make build-cli
-./build/bazarlist
+#### Register Request Body
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "secretpassword"
+}
 ```
 
-### Add an item
-```bash
-./build/bazarlist add "Milk" --category dairy
+#### Login Request Body
+```json
+{
+  "email": "john@example.com",
+  "password": "secretpassword"
+}
 ```
 
-### List all items
-```bash
-./build/bazarlist list
+#### Auth Success Response
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsIn...",
+  "user": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "created_at": "2026-08-30T12:00:00Z"
+  }
+}
 ```
 
-### Mark item as purchased
-```bash
-./build/bazarlist complete 1
+---
+
+### 📋 Shopping Lists Endpoints
+
+| Method | Endpoint | Description | Query Params |
+|---|---|---|---|
+| `GET` | `/api/lists` | Get paginated lists for a month | `month=YYYY-MM`, `page=1`, `limit=10` |
+| `POST` | `/api/lists` | Create a new shopping list | — |
+| `GET` | `/api/lists/{id}` | Get list by ID with its items | — |
+| `PUT` / `PATCH` | `/api/lists/{id}` | Update shopping list name/date | — |
+| `DELETE` | `/api/lists/{id}` | Delete a shopping list | — |
+
+#### Create List Request Body
+```json
+{
+  "name": "Weekly Grocery",
+  "date": "2026-08-30"
+}
 ```
 
-### Remove an item
-```bash
-./build/bazarlist remove 1
+---
+
+### 🛒 List Items Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/lists/{id}/items` | Get all items in a list |
+| `POST` | `/api/lists/{id}/items` | Add a new item to a list |
+| `PUT` / `PATCH` | `/api/lists/{id}/items/{itemId}` | Update item name, price, or purchased status |
+| `DELETE` | `/api/lists/{id}/items/{itemId}` | Delete an item from a list |
+
+#### Create Item Request Body
+```json
+{
+  "name": "Milk (2 Liters)",
+  "price": 160.00,
+  "purchased": false
+}
 ```
 
-## 📡 REST API
+---
 
-The web application includes a full REST API for integration with other tools.
+## ⚙️ Configuration Variables
 
-### Quick API Examples
+| Variable | Description | Default |
+|---|---|---|
+| `DB_HOST` | MySQL database host | `localhost` |
+| `DB_PORT` | MySQL database port | `3306` |
+| `DB_USER` | MySQL database user | `root` |
+| `DB_PASSWORD` | MySQL database password | `""` |
+| `DB_NAME` | MySQL database name | `bazarlist` |
+| `JWT_SECRET` | Secret key for signing JWT tokens | `bazarlist-secret-key...` |
+| `PORT` | HTTP server port | `8080` |
 
-```bash
-# Add item via API
-curl -X POST http://localhost:8080/api/items \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Milk", "category": "dairy"}'
+---
 
-# Get all items
-curl http://localhost:8080/api/items
+## 🛠️ Makefile Commands
 
-# Complete an item
-curl -X POST http://localhost:8080/api/items/1/complete
+| Command | Description |
+|---|---|
+| `make run-web` | Run the web server directly with environment variables |
+| `make build-web` | Compile web binary to `build/bazarlist-web` |
+| `make clean` | Remove build artifacts |
+| `make fmt` | Format Go source files |
+| `make deps` | Download and tidy Go modules |
 
-# Search items
-curl http://localhost:8080/api/search?q=milk
+---
 
-# Get statistics
-cur📚 Documentation
+## 📚 Detailed Documentation
 
-- **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Complete project overview
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
-- **[docs/WEB_APPLICATION.md](docs/WEB_APPLICATION.md)** - Web application guide
-- **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)** - Complete API documentation
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architecture details
-- **[docs/GO_TUTORIAL.md](docs/GO_TUTORIAL.md)** - Go learning guide
-- **[docs/LEARNING_ROADMAP.md](docs/LEARNING_ROADMAP.md)** - 5-week learning path
+For deeper dives into architecture and guides, explore the `docs/` folder:
 
-## 🎓 Learning Path
+- **[Architecture Guide](docs/ARCHITECTURE.md)**: System design and architectural patterns.
+- **[MySQL & Auth Setup](docs/MYSQL_AUTH_SETUP.md)**: Detailed step-by-step guide for database and user auth setup.
+- **[API Reference](docs/API_REFERENCE.md)**: Extended API schema and examples.
+- **[Web Application Guide](docs/WEB_APPLICATION.md)**: Overview of UI features and frontend workflow.
+- **[Go Learning Roadmap](docs/LEARNING_ROADMAP.md)**: 5-week Go concepts learning path.
 
-This project is designed to help you learn Golang progressively:
-
-1. **Phase 1**: Fundamentals (Complete) ✅
-   - Basic Go syntax
-   - Structs and methods
-   - File I/O and JSON
-   - CLI flag handling
-   - Error handling
-
-2. **Phase 2**: Testing (In Progress) 🔄
-   - Go testing framework
-   - Table-driven tests
-   - Mocking
-
-3. **Phase 3**: Web Development (New!) 🌐
-   - HTTP servers
-   - REST APIs
-   - Middleware
-   - Frontend integration
-```
-
-### Lint code
-```bash
-make lint
-```
-
-## Learning Path
-
-This project is designed to help you learn Golang progressively:
-
-1. **Phase 1**: CLI Application (Current)
-   - Basic Go syntax
-   - Structs and methods
-   - File I/O and JSON
-   - CLI flag handling
-   - Error handling
-
-2. **Phase 2**: Testing
-   - Go testing framework
-   - Table-driven tests
-   - Mocking
-🔄 Data Synchronization
-
-Both the CLI and Web applications share the same JSON storage file. This means you can:
-
-- Add items via the web UI
-- View and manage them using the CLI
-- Complete items via CLI
-- See changes reflected in the web UI instantly
-
-Perfect for using on desktop (web) and mobile (CLI)!
-
-## 🌟 Features Comparison
-
-| Feature | CLI | Web |
-|---------|-----|-----|
-| Add items | ✅ | ✅ |
-| List items | ✅ | ✅ |
-| Complete items | ✅ | ✅ |
-| Delete items | ✅ | ✅ |
-| Search items | ✅ | ✅ |
-| Filter by category | ✅ | ✅ |
-| Visual UI | ❌ | ✅ |
-| Statistics | ❌ | ✅ |
-| Real-time updates | ❌ | ✅ |
-| Mobile-friendly | ❌ | ✅ |
-| Scriptable | ✅ | ❌ |
-| API access | ❌ | ✅ |
+---
 
 ## 🤝 Contributing
 
-This is a personal learning project, but feel free to fork and modify for your own learning!
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/sejan/bazarlist/issues).
 
-## 📝 - Middleware
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-4. **Phase 4**: Database (Future)
-   - Database connections
-   - SQL vs NoSQL
-   - ORM/GORM
+---
 
-## Contributing
+## 📄 License
 
-This is a personal learning project, but feel free to fork and modify for your own learning!
-
-## License
-
-MIT License - feel free to use for learning purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

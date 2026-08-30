@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bazar List - Shopping List Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 575px;
+            background: white;
+            margin: auto;
+            min-height: 100vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-container {
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .form {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            border-left: 4px solid #c33;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .header-user {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .lists-container {
+            padding: 15px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .list-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .list-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            background: #ffffff;
+            border-color: #667eea;
+        }
+
+        .list-card:focus-within {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        .list-card.active {
+            background: #e8f0ff;
+            border: 2px solid #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .list-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .list-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .list-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .list-btn.edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .list-btn.delete {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .add-list-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .add-list-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .add-list-btn:active {
+            transform: scale(0.95);
+        }
+
+        .items-list {
+            margin-top: 15px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .item-row:hover {
+            background: #f0f4ff;
+            border-color: #667eea;
+            transform: translateX(3px);
+        }
+
+        .item-row:focus-within {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        .item-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .item-checkbox.checked {
+            background: #667eea;
+        }
+
+        .item-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .item-name {
+            flex: 1;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.95rem;
+        }
+
+        .item-delete {
+            padding: 6px 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .item-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .item-btn.edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .item-btn.edit:hover {
+            background: #5568d3;
+        }
+
+        .item-row.purchased .item-name {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .total-section {
+            background: #e8f0ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .total-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Grouping & Pagination Styles */
+        .controls-container {
+            padding: 15px 15px 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .month-filter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0f4ff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #d0d7f7;
+        }
+
+        .month-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .month-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            font-size: 0.85rem;
+            color: #2d3748;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .month-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px 15px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+
+        .page-info {
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .month-total-section {
+            background: #f8faff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .month-total-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .month-total-amount {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="container login-container">
+        <div class="logo">🛒</div>
+        <p class="subtitle">Bazar List - Shopping List Manager</p>
+        
+        <div id="loginError" class="error hidden"></div>
+        
+        <form id="loginForm" class="form">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn">Login</button>
+            <button type="button" class="btn btn-secondary" onclick="showRegister()">Create Account</button>
+        </form>
+
+        <form id="registerForm" class="form hidden">
+            <div class="form-group">
+                <label>Name (Optional)</label>
+                <input type="text" id="regName" placeholder="Your display name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="regEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" required placeholder="Choose a password (min 6 chars)">
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+            <button type="button" class="btn btn-secondary" onclick="showLogin()">Back to Login</button>
+        </form>
+    </div>
+
+        <div id="listsPage" class="container hidden">
+            <div class="header">
+                <div class="header-title">🛒 My Lists</div>
+                <div class="header-user">
+                    <span id="usernameDisplay"></span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            
+            <div class="controls-container">
+                <div class="month-filter">
+                    <div class="month-label">
+                        📅 <span id="currentMonthDisplay">Loading...</span>
+                        <span id="totalItemsBadge" class="stats-badge">0</span>
+                    </div>
+                    <select id="monthSelect" class="month-select" onchange="changeMonth(this.value)">
+                        <option value="">Select Month</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="listsContainer" class="lists-container">
+                <div class="loading">Loading</div>
+            </div>
+
+            <div id="monthTotalSection" class="month-total-section hidden">
+                <div class="month-total-label">Monthly Total Expenses</div>
+                <div id="monthTotalAmount" class="month-total-amount">$0.00</div>
+            </div>
+
+            <div id="paginationContainer" class="pagination-container hidden">
+                <button id="prevPageBtn" class="page-btn" onclick="changePage(-1)">← Prev</button>
+                <div id="pageInfo" class="page-info">Page 1 of 1</div>
+                <button id="nextPageBtn" class="page-btn" onclick="changePage(1)">Next →</button>
+            </div>
+        </div>
+    <button id="addListBtn" class="add-list-btn hidden" onclick="showAddListModal()">+</button>
+
+    <!-- List Details Page -->
+    <div id="listPage" class="container hidden">
+        <div class="header">
+            <div>
+                <button class="logout-btn" onclick="goBack()">← Back</button>
+                <span id="listTitle" class="header-title" style="margin-left: 10px;"></span>
+            </div>
+            <div class="header-user">
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div id="itemsContainer" class="lists-container">
+            <div class="loading">Loading</div>
+        </div>
+    </div>
+    <button id="addItemBtn" class="add-list-btn hidden" onclick="showAddItemModal()">+</button>
+
+    <!-- Add List Modal -->
+    <div id="addListModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">New Shopping List</h3>
+            <div class="form">
+                <div class="form-group">
+                    <label>List Name</label>
+                    <input type="text" id="listName" placeholder="e.g., vegetables" required>
+                </div>
+                <div class="form-group">
+                    <label>Date (optional)</label>
+                    <input type="date" id="listDate">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModals()">Cancel</button>
+                <button class="btn" onclick="createList()">Create List</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="itemModalTitle">Add Item</h3>
+            <div class="form">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="itemName" placeholder="e.g., Milk" required>
+                </div>
+                <div class="form-group">
+                    <label>Price (optional)</label>
+                    <input type="number" id="itemPrice" placeholder="0.00" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModals()">Cancel</button>
+                <button class="btn" id="itemModalBtn" onclick="saveItem()">Add Item</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let token = localStorage.getItem('token');
+        let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        let currentListId = null;
+        
+        // Grouping & Pagination State
+        let currentMonth = '';
+        let currentPage = 1;
+        let currentLimit = 10;
+        let totalPages = 1;
+
+        // Check authentication on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) {
+                showListsPage();
+            } else {
+                showLoginPage();
+            }
+        });
+
+        // Auth Functions
+        async function login(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    token = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    showListsPage();
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error');
+            }
+        }
+
+        async function register(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    token = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    showListsPage();
+                } else {
+                    showError(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            token = null;
+            currentUser = {};
+            showLoginPage();
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('listsPage').classList.add('hidden');
+            document.getElementById('listPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        function showLoginPage() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('listsPage').classList.add('hidden');
+            document.getElementById('listPage').classList.add('hidden');
+            document.getElementById('addListBtn').classList.add('hidden');
+            document.getElementById('addItemBtn').classList.add('hidden');
+        }
+
+        function showListsPage() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('listsPage').classList.remove('hidden');
+            document.getElementById('listPage').classList.add('hidden');
+            document.getElementById('addListBtn').classList.remove('hidden');
+            document.getElementById('addItemBtn').classList.add('hidden');
+            document.getElementById('usernameDisplay').textContent = currentUser.name || currentUser.email || 'User';
+            loadLists();
+        }
+
+        function showListPage(listId) {
+            currentListId = listId;
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('listsPage').classList.add('hidden');
+            document.getElementById('listPage').classList.remove('hidden');
+            document.getElementById('addListBtn').classList.add('hidden');
+            document.getElementById('addItemBtn').classList.remove('hidden');
+            loadListDetails(listId);
+        }
+
+        function goBack() {
+            showListsPage();
+            currentListId = null;
+        }
+
+        // API Functions
+        async function loadLists(month = currentMonth, page = currentPage) {
+            const container = document.getElementById('listsContainer');
+            container.innerHTML = '<div class="loading">Loading</div>';
+
+            try {
+                let url = `${API_BASE}/lists?page=${page}&limit=${currentLimit}`;
+                if (month) url += `&month=${month}`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentMonth = data.month;
+                    currentPage = data.pagination.current_page;
+                    totalPages = data.pagination.total_pages;
+                    displayLists(data);
+                } else {
+                    container.innerHTML = `<div class="error">${data.error || 'Failed to load lists'}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="error">Failed to load lists</div>';
+                console.error('Error loading lists:', error);
+            }
+        }
+
+        function displayLists(data) {
+            const container = document.getElementById('listsContainer');
+            const lists = data.lists || [];
+            
+            // Update month selector & display
+            document.getElementById('currentMonthDisplay').textContent = formatMonth(data.month);
+            document.getElementById('totalItemsBadge').textContent = data.pagination ? data.pagination.total_items : 0;
+            
+            const monthTotalSection = document.getElementById('monthTotalSection');
+            const monthTotalAmount = document.getElementById('monthTotalAmount');
+            if (monthTotalSection && monthTotalAmount) {
+                monthTotalSection.classList.remove('hidden');
+                monthTotalAmount.textContent = `$${(data.total_amount || 0).toFixed(2)}`;
+            }
+
+            const monthSelect = document.getElementById('monthSelect');
+            if (data.available_months && data.available_months.length > 0) {
+                const currentVal = monthSelect.value;
+                monthSelect.innerHTML = data.available_months.map(m => `
+                    <option value="${m}" ${m === data.month ? 'selected' : ''}>${formatMonth(m)}</option>
+                `).join('');
+            }
+
+            // Update pagination
+            const paginationContainer = document.getElementById('paginationContainer');
+            if (data.pagination && data.pagination.total_pages > 1) {
+                paginationContainer.classList.remove('hidden');
+                document.getElementById('pageInfo').textContent = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
+                document.getElementById('prevPageBtn').disabled = data.pagination.current_page <= 1;
+                document.getElementById('nextPageBtn').disabled = data.pagination.current_page >= data.pagination.total_pages;
+            } else {
+                paginationContainer.classList.add('hidden');
+            }
+            
+            if (lists.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3h18v18H3zM9 9h6M9 13h6M9 17h6"/>
+                        </svg>
+                        <p>No shopping lists for this month</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Tap + to create your first list</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = lists.map(list => {
+                const listDate = new Date(list.date);
+                const dateStr = listDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                const fullName = list.name ? `${list.name} - ${dateStr}` : dateStr;
+                
+                return `
+                <div class="list-card ${currentListId === list.id ? 'active' : ''}" onclick="showListPage(${list.id})" tabindex="0">
+                    <div class="list-header">
+                        <div class="list-info">
+                            <div class="list-name">${escapeHtml(fullName)}</div>
+                        </div>
+                        <div class="list-actions">
+                            <button class="list-btn delete" onclick="event.stopPropagation(); deleteList(${list.id})" aria-label="Delete list">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function formatMonth(monthStr) {
+            if (!monthStr) return '';
+            const [year, month] = monthStr.split('-');
+            const date = new Date(year, month - 1);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        function changeMonth(newMonth) {
+            currentMonth = newMonth;
+            currentPage = 1;
+            loadLists(newMonth, 1);
+        }
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadLists(currentMonth, newPage);
+            }
+        }
+
+        async function loadListDetails(listId) {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '<div class="loading">Loading</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/lists/${listId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const list = await response.json();
+                currentListCache = list;
+                document.getElementById('listTitle').textContent = list.get_full_name;
+                displayItems(list.items);
+            } catch (error) {
+                container.innerHTML = '<div class="error">Failed to load items</div>';
+            }
+        }
+
+        function displayItems(items) {
+            const container = document.getElementById('itemsContainer');
+            const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3h18v18H3zM9 9h6M9 13h6M9 17h6"/>
+                        </svg>
+                        <p>No items yet</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Tap + to add items</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="item-row ${item.purchased ? 'purchased' : ''}" tabindex="0">
+                    <div class="item-checkbox ${item.purchased ? 'checked' : ''}" onclick="event.stopPropagation(); togglePurchased(${item.id})" role="checkbox" aria-checked="${item.purchased}"></div>
+                    <div class="item-name">${escapeHtml(item.name)}</div>
+                    <div class="item-price">$${(item.price || 0).toFixed(2)}</div>
+                    <div class="item-actions">
+                        <button class="item-btn edit" onclick="event.stopPropagation(); editItem(${item.id})" aria-label="Edit item">✏️</button>
+                        <button class="item-delete" onclick="event.stopPropagation(); deleteItem(${item.id})" aria-label="Delete item">🗑️</button>
+                    </div>
+                </div>
+            `).join('') + `
+                <div class="total-section">
+                    <div class="total-label">Total Cost</div>
+                    <div class="total-amount">$${total.toFixed(2)}</div>
+                </div>
+            `;
+        }
+
+        async function createList() {
+            const name = document.getElementById('listName').value;
+            const date = document.getElementById('listDate').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/lists`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, date })
+                });
+
+                if (response.ok) {
+                    closeModals();
+                    loadLists();
+                } else {
+                    alert('Failed to create list');
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+
+        async function deleteList(listId) {
+            if (!confirm('Delete this shopping list?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/lists/${listId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    loadLists();
+                }
+            } catch (error) {
+                alert('Failed to delete list');
+            }
+        }
+
+        let editingItemId = null;
+        let currentListCache = null;
+
+        async function addItem() {
+            const name = document.getElementById('itemName').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+            try {
+                const response = await fetch(`${API_BASE}/lists/${currentListId}/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, price, purchased: false })
+                });
+
+                if (response.ok) {
+                    closeModals();
+                    loadListDetails(currentListId);
+                } else {
+                    alert('Failed to add item');
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+
+        function editItem(itemId) {
+            if (!currentListCache) return;
+            const item = currentListCache.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            editingItemId = itemId;
+            document.getElementById('itemModalTitle').textContent = 'Edit Item';
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemPrice').value = item.price || '';
+            document.getElementById('itemModalBtn').textContent = 'Update Item';
+            document.getElementById('addItemModal').classList.add('show');
+            document.getElementById('itemName').focus();
+        }
+
+        async function saveItem() {
+            const name = document.getElementById('itemName').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+            if (!name.trim()) {
+                alert('Item name is required');
+                return;
+            }
+
+            try {
+                let response;
+                if (editingItemId) {
+                    // Update existing item
+                    const item = await getItem(editingItemId);
+                    item.name = name;
+                    item.price = price;
+
+                    response = await fetch(`${API_BASE}/lists/${currentListId}/items/${editingItemId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(item)
+                    });
+                } else {
+                    // Add new item
+                    response = await fetch(`${API_BASE}/lists/${currentListId}/items`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name, price, purchased: false })
+                    });
+                }
+
+                if (response.ok) {
+                    closeModals();
+                    loadListDetails(currentListId);
+                } else {
+                    alert(editingItemId ? 'Failed to update item' : 'Failed to add item');
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+
+        async function togglePurchased(itemId) {
+            const item = await getItem(itemId);
+            item.purchased = !item.purchased;
+
+            try {
+                const response = await fetch(`${API_BASE}/lists/${currentListId}/items/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(item)
+                });
+
+                if (response.ok) {
+                    loadListDetails(currentListId);
+                }
+            } catch (error) {
+                alert('Failed to update item');
+            }
+        }
+
+        async function deleteItem(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/lists/${currentListId}/items/${itemId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    loadListDetails(currentListId);
+                }
+            } catch (error) {
+                alert('Failed to delete item');
+            }
+        }
+
+        async function getItem(itemId) {
+            const response = await fetch(`${API_BASE}/lists/${currentListId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const list = await response.json();
+            return list.items.find(i => i.id === itemId);
+        }
+
+        // UI Helpers
+        function showAddListModal() {
+            document.getElementById('addListModal').classList.add('show');
+            document.getElementById('listName').value = '';
+            document.getElementById('listDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('listName').focus();
+        }
+
+        function showAddItemModal() {
+            editingItemId = null;
+            document.getElementById('itemModalTitle').textContent = 'Add Item';
+            document.getElementById('itemModalBtn').textContent = 'Add Item';
+            document.getElementById('addItemModal').classList.add('show');
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemName').focus();
+        }
+
+        function closeModals() {
+            document.getElementById('addListModal').classList.remove('show');
+            document.getElementById('addItemModal').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event Listeners
+        document.getElementById('loginForm').addEventListener('submit', login);
+        document.getElementById('registerForm').addEventListener('submit', register);
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModals();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
