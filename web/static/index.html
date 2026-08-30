@@ -74,8 +74,9 @@
     .container {
         width: 100%;
         max-width: 500px;
-        background: var(--bg-card);
+        background: #f8fafc;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         box-shadow: var(--shadow-lg);
@@ -206,8 +207,8 @@
 
     /* App Header */
     .header {
-        background: var(--bg-card);
-        padding: 10px 20px;
+        background: #ffffff;
+        padding: 12px 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -218,11 +219,11 @@
     }
 
     .header-title {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
 
     .header-user {
@@ -231,35 +232,47 @@
         gap: 8px;
     }
 
+    .user-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 5px 10px;
+        border-radius: 999px;
+        user-select: none;
+    }
+
     /* PWA Network Status Indicator Dot */
     .status-indicator-dot {
-        width: 10px;
-        height: 10px;
+        width: 9px;
+        height: 9px;
+        min-width: 9px;
+        min-height: 9px;
         border-radius: 50%;
         display: inline-block;
-        cursor: pointer;
         transition: all 0.3s ease;
         flex-shrink: 0;
     }
 
     .dot-online {
         background-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
     }
 
     .dot-offline {
         background-color: #ef4444;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
     }
 
     .dot-syncing {
-        background-color: #10b981;
-        animation: dot-pulse 1.2s infinite ease-in-out;
+        background-color: #3b82f6;
+        animation: dot-pulse 1s infinite ease-in-out;
     }
 
     @keyframes dot-pulse {
-        0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
-        50% { transform: scale(0.8); opacity: 0.6; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
+        0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+        50% { transform: scale(0.8); opacity: 0.6; box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.15); }
     }
 
     .pwa-install-btn {
@@ -390,13 +403,27 @@
     }
 
     /* Summary Tab Components */
+    .summary-container {
+        flex: 1;
+        padding: 16px 16px 100px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
     .summary-hero-card {
         background: linear-gradient(135deg, var(--primary), var(--primary-dark));
         border-radius: 18px;
         padding: 22px 20px;
         color: white;
         box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.35);
-        margin-bottom: 16px;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
     }
 
     .summary-label {
@@ -427,15 +454,19 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
-        margin-bottom: 16px;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
     }
 
     .stat-card {
         background: white;
         border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px;
-        box-shadow: var(--shadow-sm);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        box-sizing: border-box;
+        width: 100%;
     }
 
     .stat-card-header {
@@ -492,24 +523,15 @@
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .summary-container {
-        flex: 1;
-        padding: 16px 16px 100px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        display: flex;
-        flex-direction: column;
-    }
-
     .summary-section-card {
         background: white;
         border: 1px solid var(--border);
         border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: var(--shadow-sm);
+        padding: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         box-sizing: border-box;
         width: 100%;
+        margin: 0;
     }
 
     .summary-section-header {
@@ -528,19 +550,19 @@
     }
 
     .trip-breakdown-row {
-        padding: 10px 12px;
-        border-radius: 10px;
-        background: #f9fafb;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #f8fafc;
         margin-bottom: 8px;
         cursor: pointer;
         transition: all 0.2s;
-        border: 1px solid var(--border);
+        border: 1px solid #f1f5f9;
         box-sizing: border-box;
         width: 100%;
     }
 
     .trip-breakdown-row:hover {
-        background: #f3f4f6;
+        background: #f1f5f9;
         border-color: var(--primary-light);
         transform: translateX(2px);
     }
@@ -572,7 +594,7 @@
 
     /* Lists List */
     .lists-container {
-        padding: 8px 16px 90px;
+        padding: 4px 16px 100px;
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -921,8 +943,13 @@
                         <i data-lucide="download" size="14"></i>
                         <span>Install</span>
                     </button>
-                    <span id="networkStatusPill" class="status-indicator-dot dot-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Online"></span>
-                    <span id="usernameDisplay" class="user-name">User</span>
+                    <div class="user-badge" onclick="window.syncEngine && window.syncEngine.sync()" title="Network status & user account" style="cursor: pointer;">
+                        <span id="networkStatusPill" class="status-indicator-dot dot-online"></span>
+                        <span id="usernameDisplay" class="user-name">User</span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()" title="Log out">
+                        <i data-lucide="log-out" size="18"></i>
+                    </button>
                 </div>
             </header>
 
@@ -1058,7 +1085,9 @@
                     <span id="listTitle" style="font-size: 1rem;">List Items</span>
                 </div>
                 <div class="header-user">
-                    <span class="status-indicator-dot dot-online" onclick="window.syncEngine && window.syncEngine.sync()" title="Online"></span>
+                    <div class="user-badge" onclick="window.syncEngine && window.syncEngine.sync()" style="padding: 4px 8px; cursor: pointer;" title="Network status">
+                        <span class="status-indicator-dot dot-online"></span>
+                    </div>
                     <button class="logout-btn" onclick="shareAsImage()" title="Share as Image"
                         style="background: var(--primary); color: white;">
                         <i data-lucide="share-2" size="18"></i>

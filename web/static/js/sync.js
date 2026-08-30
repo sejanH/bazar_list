@@ -44,7 +44,14 @@ class SyncEngine {
     if (!dots || dots.length === 0) return;
 
     const isOnline = navigator.onLine;
-    const pendingCount = await window.appDB.countOutbox();
+    let pendingCount = 0;
+    try {
+      if (window.appDB) {
+        pendingCount = await window.appDB.countOutbox();
+      }
+    } catch (e) {
+      console.warn('Could not count outbox for status indicator:', e);
+    }
 
     dots.forEach(dot => {
       dot.innerHTML = '';
